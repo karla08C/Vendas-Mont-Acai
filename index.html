@@ -1,0 +1,1846 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mont' Açaí - Controle de Vendas, Materiais & PDV</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <style>
+    * {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    
+    /* Paleta sóbria e fosca (Matte Dark Plum / Slate) — Sem efeitos neon */
+    body {
+      background-color: #121016;
+      min-height: 100vh;
+      color: #e2e8f0;
+    }
+
+    /* Scrollbar discreta */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #16131c;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #332c42;
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #483e5c;
+    }
+
+    /* Cards sóbrios e elegantes sem brilho neon */
+    .surface-card {
+      background: #1a1721;
+      border: 1px solid #2a2436;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+    .surface-card-subtle {
+      background: #15121b;
+      border: 1px solid #252030;
+    }
+
+    /* Animações suaves de interação */
+    .scale-tap {
+      transition: transform 0.1s ease, background-color 0.15s ease, border-color 0.15s ease;
+    }
+    .scale-tap:active {
+      transform: scale(0.98);
+    }
+
+    /* Configuração de impressão limpa para o relatório */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #modal-report, #modal-report * {
+        visibility: visible;
+      }
+      #modal-report {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-surface {
+        background: #ffffff !important;
+        color: #111827 !important;
+        border-color: #d1d5db !important;
+        box-shadow: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="p-3 sm:p-5 md:p-8 antialiased selection:bg-purple-800 selection:text-white">
+
+  <div class="max-w-6xl mx-auto space-y-6">
+
+    <!-- Top Bar -->
+    <header class="surface-card rounded-2xl p-4 sm:p-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+      <div class="flex items-center gap-3.5">
+        <div class="relative group">
+          <input type="file" id="logo-input" accept="image/*" class="hidden" />
+          <div id="logo-display-container" class="w-12 h-12 rounded-xl bg-[#3b1d5e] flex items-center justify-center text-purple-100 border border-[#522b7f] overflow-hidden cursor-pointer relative" title="Clique para enviar ou alterar a logo da loja">
+            <div id="default-logo-icon" class="flex items-center justify-center">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 009-9H3a9 9 0 009 9zm0-18a4 4 0 014 4v2H8V7a4 4 0 014-4z"/>
+              </svg>
+            </div>
+            <img id="custom-logo-img" alt="Logo Mont' Açaí" class="w-full h-full object-cover hidden" />
+            <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-xl" title="Alterar Logo">
+              <svg class="w-4 h-4 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+          </div>
+          <button id="btn-remove-logo" title="Remover logo e voltar ao ícone padrão" class="hidden absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-700 hover:bg-rose-600 text-white text-[10px] font-bold items-center justify-center shadow transition scale-tap">✕</button>
+        </div>
+
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-100">Mont' Açaí</h1>
+            <span id="role-badge" class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-[#232f29] text-[#6ee7b7] border border-[#2f4239]">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#34d399] mr-1.5"></span>
+              Modo Balcão (PDV)
+            </span>
+          </div>
+          <div class="flex items-center gap-2 mt-0.5">
+            <p class="text-xs text-slate-400">Controle de pesagem, saída de copos/colheres e faturamento</p>
+            <span class="text-slate-600 hidden sm:inline">•</span>
+            <button id="btn-trigger-upload" class="text-[11px] text-purple-300 hover:text-purple-200 font-medium underline transition">Alterar Logo</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 self-stretch lg:self-auto">
+        <!-- Botão de Login / Painel da Proprietária -->
+        <button id="btn-owner-access" class="flex-1 sm:flex-none px-3.5 py-2.5 rounded-xl bg-[#2a1f3d] hover:bg-[#36284f] text-purple-200 border border-[#463466] text-xs font-semibold flex items-center justify-center gap-2 transition scale-tap">
+          <svg class="w-4 h-4 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          <span id="btn-owner-label">Login Proprietária</span>
+        </button>
+
+        <button id="btn-export-report" class="flex-1 sm:flex-none px-3.5 py-2.5 rounded-xl bg-[#221e2b] hover:bg-[#2c2738] text-slate-200 border border-[#342e42] text-xs font-semibold flex items-center justify-center gap-2 transition scale-tap">
+          <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Relatório Fechamento
+        </button>
+
+        <button id="btn-open-clear-modal" class="px-3.5 py-2.5 rounded-xl bg-[#1f1a24] hover:bg-[#2c1d24] text-rose-300/90 hover:text-rose-200 border border-[#2e2636] hover:border-rose-900/60 text-xs font-semibold flex items-center justify-center gap-1.5 transition scale-tap" title="Zerar dados do caixa (Requer acesso da proprietária)">
+          <svg class="w-4 h-4 text-rose-400/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          Zerar Turno
+        </button>
+      </div>
+    </header>
+
+    <!-- PAINEL EXCLUSIVO DA PROPRIETÁRIA: Controle de Materiais (Copos, Isopores, Colheres e Tampas) -->
+    <section id="owner-materials-panel" class="hidden surface-card rounded-2xl p-5 sm:p-6 border border-[#4a356b] space-y-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#2c2538] pb-4">
+        <div class="flex items-start sm:items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-[#2d1f42] text-purple-200 flex items-center justify-center border border-[#483269] shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-base sm:text-lg font-bold text-white">Painel da Proprietária • Controle de Materiais & Insumos</h2>
+              <span class="px-2 py-0.5 text-[10px] font-semibold rounded bg-[#35234d] text-purple-200 border border-[#4c346e]">Acesso Gerencial</span>
+            </div>
+            <p class="text-xs text-slate-400">Acompanhe quantos copos, isopores, colheres e tampas saíram hoje e o saldo restante no balcão</p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="btn-open-stock-modal" class="px-3.5 py-2 rounded-xl bg-[#272036] hover:bg-[#322945] text-purple-200 border border-[#3f3357] text-xs font-semibold flex items-center gap-1.5 transition scale-tap">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+            Abastecer / Ajustar Estoque Inicial
+          </button>
+          <button id="btn-open-password-modal" class="px-3 py-2 rounded-xl bg-[#1c1824] hover:bg-[#262130] text-slate-300 border border-[#2e283b] text-xs font-medium transition scale-tap">
+            Alterar Senha
+          </button>
+          <button id="btn-owner-logout" class="px-3 py-2 rounded-xl bg-[#2b1c22] hover:bg-[#3b242c] text-rose-300 border border-[#452933] text-xs font-semibold transition scale-tap">
+            Sair do Modo Proprietária
+          </button>
+        </div>
+      </div>
+
+      <!-- Cards de Estoque de Materiais (Copos 500, Copos 700, Isopor 500, Colheres, Tampas) -->
+      <div id="materials-stock-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <!-- Gerado dinamicamente via JS -->
+      </div>
+
+      <!-- Registro Rápido de Baixa Avulsa / Perda de Material (ex: copo amassado, colher extra avulsa) -->
+      <div class="surface-card-subtle rounded-xl p-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div>
+          <span class="text-xs font-semibold text-slate-200 block">Baixa Avulsa ou Perda de Material</span>
+          <span class="text-[11px] text-slate-400">Registre caso algum copo/colher tenha estragado ou saído avulso fora de uma venda:</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <select id="extra-loss-item" class="bg-[#121016] border border-[#2c2538] rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none">
+            <option value="colheres">Colheres Descartáveis</option>
+            <option value="tampas">Tampas</option>
+            <option value="copo_500">Copo de 500</option>
+            <option value="copo_700">Copo de 700</option>
+            <option value="isopor_500">Isopor de 500</option>
+          </select>
+          <input type="number" id="extra-loss-qty" min="1" value="1" class="w-16 bg-[#121016] border border-[#2c2538] rounded-lg px-2.5 py-1.5 text-xs text-center font-bold text-white focus:outline-none" />
+          <input type="text" id="extra-loss-reason" placeholder="Motivo (ex: Copo amassou)" class="bg-[#121016] border border-[#2c2538] rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none" />
+          <button id="btn-register-loss" class="px-3 py-1.5 rounded-lg bg-[#522785] hover:bg-[#602e9c] text-white text-xs font-semibold transition scale-tap">
+            Registrar Baixa
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cards de Resumo Geral -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <!-- Faturamento Bruto -->
+      <div class="surface-card p-4 sm:p-5 rounded-2xl flex items-center justify-between">
+        <div>
+          <span class="text-[11px] uppercase font-semibold tracking-wider text-slate-400 block">Faturamento Bruto</span>
+          <h2 id="metric-revenue" class="text-xl sm:text-2xl font-bold text-[#6ee7b7] mt-0.5">R$ 0,00</h2>
+          <span id="metric-avg-ticket" class="text-[11px] text-slate-500 block mt-0.5">Ticket médio: R$ 0,00</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-[#1f2d27] text-[#6ee7b7] flex items-center justify-center border border-[#2c4037] shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+      </div>
+
+      <!-- Peso Total Comercializado -->
+      <div class="surface-card p-4 sm:p-5 rounded-2xl flex items-center justify-between">
+        <div>
+          <span class="text-[11px] uppercase font-semibold tracking-wider text-slate-400 block">Peso Vendido</span>
+          <h2 id="metric-total-weight" class="text-xl sm:text-2xl font-bold text-slate-100 mt-0.5">0,000 kg</h2>
+          <span id="metric-weight-grams" class="text-[11px] text-slate-500 block mt-0.5">0g na balança</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-[#232230] text-slate-300 flex items-center justify-center border border-[#323045] shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+        </div>
+      </div>
+
+      <!-- Saída de Copos & Isopores -->
+      <div class="surface-card p-4 sm:p-5 rounded-2xl flex items-center justify-between">
+        <div>
+          <span class="text-[11px] uppercase font-semibold tracking-wider text-slate-400 block">Copos / Isopores Saídos</span>
+          <h2 id="metric-sold-units" class="text-xl sm:text-2xl font-bold text-purple-200 mt-0.5">0 un</h2>
+          <span id="metric-cups-breakdown" class="text-[11px] text-slate-500 block mt-0.5">0 vendas • 0 interno</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-[#292038] text-purple-300 flex items-center justify-center border border-[#3b2d52] shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+        </div>
+      </div>
+
+      <!-- Saída de Colheres & Tampas -->
+      <div class="surface-card p-4 sm:p-5 rounded-2xl flex items-center justify-between">
+        <div>
+          <span class="text-[11px] uppercase font-semibold tracking-wider text-slate-400 block">Colheres & Tampas</span>
+          <h2 id="metric-spoons-out" class="text-xl sm:text-2xl font-bold text-[#fcd34d] mt-0.5">0 colheres</h2>
+          <span id="metric-lids-out" class="text-[11px] text-slate-500 block mt-0.5">0 tampas utilizadas</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-[#2e261b] text-[#fcd34d] flex items-center justify-center border border-[#423625] shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      
+      <!-- Formulário de Lançamento (Coluna Esquerda) -->
+      <div class="lg:col-span-5 surface-card rounded-2xl p-5 sm:p-6 space-y-4">
+        <div class="flex items-center justify-between border-b border-[#2a2436] pb-3">
+          <h2 class="font-bold text-base sm:text-lg text-slate-100 flex items-center gap-2">
+            <svg class="w-5 h-5 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Novo Lançamento
+          </h2>
+          <span class="text-[11px] text-slate-300 font-medium bg-[#251f30] px-2.5 py-1 rounded-md border border-[#342c44]">Balança & Materiais</span>
+        </div>
+
+        <!-- Toggle: Venda vs Consumo Interno -->
+        <div>
+          <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">Destino da Operação</label>
+          <div class="grid grid-cols-2 gap-2 bg-[#14111a] p-1 rounded-xl border border-[#262030]">
+            <button type="button" id="type-venda-btn" class="py-2.5 px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-2 bg-[#4c2478] text-white scale-tap">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+              Venda Cliente
+            </button>
+            <button type="button" id="type-consumo-btn" class="py-2.5 px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-2 text-slate-400 hover:text-slate-200 scale-tap">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+              Consumo Interno
+            </button>
+          </div>
+        </div>
+
+        <!-- Seleção de Embalagem -->
+        <div>
+          <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">Recipiente Selecionado</label>
+          <div id="packaging-options" class="grid grid-cols-3 gap-2">
+            <!-- Gerado via JavaScript -->
+          </div>
+        </div>
+
+        <!-- Peso Aferido & Valor -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">Peso Aferido (g)</label>
+            <div class="relative">
+              <input type="number" step="1" min="1" id="input-weight" placeholder="Ex: 530" class="w-full bg-[#14111a] border border-[#2c2538] rounded-xl px-3 py-2.5 pr-8 text-sm font-semibold text-white placeholder-slate-600 focus:outline-none focus:border-purple-500/70 transition" />
+              <span class="absolute right-3 top-2.5 text-xs text-slate-500 font-bold">g</span>
+            </div>
+          </div>
+
+          <div>
+            <label id="value-label" class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">Valor Unitário (R$)</label>
+            <div class="relative">
+              <input type="number" step="0.05" min="0" id="input-val" placeholder="Ex: 24.50" class="w-full bg-[#14111a] border border-[#2c2538] rounded-xl px-3 py-2.5 pr-10 text-sm font-semibold text-white placeholder-slate-600 focus:outline-none focus:border-purple-500/70 transition disabled:opacity-40 disabled:cursor-not-allowed" />
+              <span class="absolute right-3 top-2.5 text-xs text-slate-500 font-bold">R$</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controle de Materiais que saem no pedido: Copos, Colheres e Tampas -->
+        <div class="bg-[#14111a] p-3.5 rounded-xl border border-[#262030] space-y-3">
+          <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Materiais Entregues neste Pedido</span>
+
+          <!-- Quantidade de Copos/Isopores -->
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs text-slate-200 font-semibold block">Qtd. de Copos / Isopores</span>
+              <span class="text-[10px] text-slate-500">Recipientes usados neste lançamento</span>
+            </div>
+            <div class="flex items-center bg-[#1e1a26] border border-[#322b40] rounded-lg overflow-hidden">
+              <button type="button" id="qty-minus" class="w-8 h-7 text-slate-300 hover:text-white hover:bg-[#2a2436] transition font-bold text-sm flex items-center justify-center scale-tap">-</button>
+              <input type="number" id="input-qty" min="1" value="1" class="w-9 bg-transparent text-center text-xs font-bold text-white focus:outline-none" />
+              <button type="button" id="qty-plus" class="w-8 h-7 text-slate-300 hover:text-white hover:bg-[#2a2436] transition font-bold text-sm flex items-center justify-center scale-tap">+</button>
+            </div>
+          </div>
+
+          <!-- Quantidade de Colheres Descartáveis -->
+          <div class="flex items-center justify-between border-t border-[#221d2b] pt-2.5">
+            <div>
+              <span class="text-xs text-slate-200 font-semibold block">Colheres Descartáveis</span>
+              <span class="text-[10px] text-slate-500">Quantas colheres o cliente levou (0 se nenhuma)</span>
+            </div>
+            <div class="flex items-center bg-[#1e1a26] border border-[#322b40] rounded-lg overflow-hidden">
+              <button type="button" id="spoons-minus" class="w-8 h-7 text-slate-300 hover:text-white hover:bg-[#2a2436] transition font-bold text-sm flex items-center justify-center scale-tap">-</button>
+              <input type="number" id="input-spoons" min="0" value="1" class="w-9 bg-transparent text-center text-xs font-bold text-[#fcd34d] focus:outline-none" />
+              <button type="button" id="spoons-plus" class="w-8 h-7 text-slate-300 hover:text-white hover:bg-[#2a2436] transition font-bold text-sm flex items-center justify-center scale-tap">+</button>
+            </div>
+          </div>
+
+          <!-- Quantidade de Tampas -->
+          <div class="flex items-center justify-between border-t border-[#221d2b] pt-2.5">
+            <div>
+              <span class="text-xs text-slate-200 font-semibold block">Tampas Utilizadas</span>
+              <span class="text-[10px] text-slate-500">Para viagem / entrega (0 se consumiu sem tampa)</span>
+            </div>
+            <div class="flex items-center bg-[#1e1a26] border border-[#322b40] rounded-lg overflow-hidden">
+              <button type="button" id="lids-minus" class="w-8 h-7 text-slate-300 hover:text-white hover:bg-[#2a2436] transition font-bold text-sm flex items-center justify-center scale-tap">-</button>
+              <input type="number" id="input-lids" min="0" value="0" class="w-9 bg-transparent text-center text-xs font-bold text-purple-200 focus:outline-none" />
+              <button type="button" id="lids-plus" class="w-8 h-7 text-slate-300 hover:text-white hover:bg-[#2a2436] transition font-bold text-sm flex items-center justify-center scale-tap">+</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Meio de Pagamento (somente em Venda) -->
+        <div id="payment-method-container">
+          <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">Forma de Pagamento</label>
+          <div id="payment-methods" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <!-- Gerado via JS -->
+          </div>
+        </div>
+
+        <!-- Observações / Identificação -->
+        <div>
+          <label id="notes-label" class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">Observação (Opcional)</label>
+          <input type="text" id="input-notes" placeholder="Ex: Leite condensado extra, para viagem..." class="w-full bg-[#14111a] border border-[#2c2538] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-purple-500/70 transition" />
+        </div>
+
+        <div class="pt-2 border-t border-[#2a2436] space-y-3">
+          <div class="flex justify-between items-center bg-[#14111a] p-3.5 rounded-xl border border-[#262030]">
+            <div>
+              <span class="text-xs font-medium text-slate-400 block">Total do Lançamento:</span>
+              <span id="display-formula" class="text-[10px] text-slate-500">1x R$ 0,00</span>
+            </div>
+            <span id="display-subtotal" class="text-2xl font-bold text-[#6ee7b7]">R$ 0,00</span>
+          </div>
+
+          <button type="button" id="btn-submit-tx" class="w-full py-3.5 rounded-xl font-semibold text-sm transition flex items-center justify-center gap-2 bg-[#522785] hover:bg-[#602e9c] text-white border border-[#6b37ab] scale-tap">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span>Confirmar e Dar Baixa nos Materiais</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Painel de Histórico (Coluna Direita) -->
+      <div class="lg:col-span-7 surface-card rounded-2xl p-5 sm:p-6 flex flex-col justify-between min-h-[600px]">
+        <div>
+          <!-- Header do Histórico com Filtros -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#2a2436] gap-3">
+            <div>
+              <h2 class="font-bold text-base sm:text-lg text-slate-100 flex items-center gap-2">
+                <svg class="w-5 h-5 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                Movimentações e Saída de Materiais
+              </h2>
+              <span id="tx-counter-text" class="text-[11px] text-slate-400">0 registros gravados</span>
+            </div>
+
+            <!-- Filtros Rápidos -->
+            <div class="flex items-center gap-1 bg-[#14111a] p-1 rounded-xl border border-[#262030] text-xs">
+              <button data-filter="TODOS" class="filter-btn px-3 py-1 rounded-lg bg-[#2d243d] text-slate-100 font-semibold">Todos</button>
+              <button data-filter="VENDA" class="filter-btn px-3 py-1 rounded-lg text-slate-400 hover:text-slate-200">Vendas</button>
+              <button data-filter="CONSUMO_INTERNO" class="filter-btn px-3 py-1 rounded-lg text-slate-400 hover:text-slate-200">Consumo / Perdas</button>
+            </div>
+          </div>
+
+          <!-- Lista de Transações com Scroll -->
+          <div id="tx-list-container" class="divide-y divide-[#231e2e] overflow-y-auto max-h-[480px] pr-1 mt-2">
+            <!-- Injetado dinamicamente via JS -->
+          </div>
+        </div>
+
+        <!-- Rodapé do Histórico -->
+        <div class="pt-4 mt-4 border-t border-[#2a2436] text-[11px] text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-2">
+          <span>🔒 Exclusão de registros e ajuste de estoque protegidos por senha da proprietária.</span>
+          <span class="text-slate-400 font-medium">Auditoria de Copos & Colheres Ativa</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL DE LOGIN DA PROPRIETÁRIA -->
+  <div id="modal-owner-login" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
+    <div class="surface-card max-w-sm w-full rounded-2xl p-6 border border-[#42325c] space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-xl bg-[#2d1f42] text-purple-200 flex items-center justify-center border border-[#483269]">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-white">Acesso da Proprietária</h3>
+            <p class="text-[11px] text-slate-400">Controle de estoque, copos, colheres e caixa</p>
+          </div>
+        </div>
+        <button id="btn-close-login" class="text-slate-400 hover:text-white p-1">✕</button>
+      </div>
+
+      <div class="space-y-3 pt-1">
+        <div>
+          <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Senha / PIN da Proprietária</label>
+          <input type="password" id="input-owner-password" placeholder="Digite sua senha (padrão: 1234)" class="w-full bg-[#121016] border border-[#322945] rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-purple-400" />
+          <span class="text-[10px] text-slate-500 mt-1 block">Senha inicial padrão: <strong class="text-slate-400">1234</strong> (você pode alterar após entrar).</span>
+        </div>
+
+        <button id="btn-confirm-login" class="w-full py-2.5 rounded-xl bg-[#522785] hover:bg-[#602e9c] text-white font-semibold text-xs transition scale-tap">
+          Entrar no Painel da Proprietária
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ABASTECER / AJUSTAR ESTOQUE INICIAL DE MATERIAIS -->
+  <div id="modal-stock-adjust" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
+    <div class="surface-card max-w-md w-full rounded-2xl p-6 border border-[#42325c] space-y-4">
+      <div class="flex items-center justify-between border-b border-[#2a2436] pb-3">
+        <div>
+          <h3 class="font-bold text-base text-white">Abastecer / Definir Estoque Inicial</h3>
+          <p class="text-[11px] text-slate-400">Informe a quantidade total disponível no início do turno/dia:</p>
+        </div>
+        <button id="btn-close-stock-modal" class="text-slate-400 hover:text-white p-1">✕</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div class="flex items-center justify-between bg-[#14111a] p-2.5 rounded-xl border border-[#262030]">
+          <span class="font-semibold text-slate-200">Copo de 500ml (unidades)</span>
+          <input type="number" id="stock-copo_500" min="0" class="w-24 bg-[#1e1a26] border border-[#352d47] rounded-lg px-2.5 py-1.5 text-right font-bold text-white" />
+        </div>
+        <div class="flex items-center justify-between bg-[#14111a] p-2.5 rounded-xl border border-[#262030]">
+          <span class="font-semibold text-slate-200">Copo de 700ml (unidades)</span>
+          <input type="number" id="stock-copo_700" min="0" class="w-24 bg-[#1e1a26] border border-[#352d47] rounded-lg px-2.5 py-1.5 text-right font-bold text-white" />
+        </div>
+        <div class="flex items-center justify-between bg-[#14111a] p-2.5 rounded-xl border border-[#262030]">
+          <span class="font-semibold text-slate-200">Isopor de 500ml (unidades)</span>
+          <input type="number" id="stock-isopor_500" min="0" class="w-24 bg-[#1e1a26] border border-[#352d47] rounded-lg px-2.5 py-1.5 text-right font-bold text-white" />
+        </div>
+        <div class="flex items-center justify-between bg-[#14111a] p-2.5 rounded-xl border border-[#262030]">
+          <span class="font-semibold text-[#fcd34d]">Colheres Descartáveis (unidades)</span>
+          <input type="number" id="stock-colheres" min="0" class="w-24 bg-[#1e1a26] border border-[#352d47] rounded-lg px-2.5 py-1.5 text-right font-bold text-[#fcd34d]" />
+        </div>
+        <div class="flex items-center justify-between bg-[#14111a] p-2.5 rounded-xl border border-[#262030]">
+          <span class="font-semibold text-purple-200">Tampas (unidades)</span>
+          <input type="number" id="stock-tampas" min="0" class="w-24 bg-[#1e1a26] border border-[#352d47] rounded-lg px-2.5 py-1.5 text-right font-bold text-purple-200" />
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="btn-cancel-stock" class="px-4 py-2 rounded-xl bg-[#252030] text-slate-300 text-xs font-semibold">Cancelar</button>
+        <button id="btn-save-stock" class="px-4 py-2 rounded-xl bg-[#522785] hover:bg-[#602e9c] text-white text-xs font-semibold scale-tap">Salvar Estoque</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ALTERAR SENHA DA PROPRIETÁRIA -->
+  <div id="modal-change-password" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
+    <div class="surface-card max-w-sm w-full rounded-2xl p-6 border border-[#42325c] space-y-4">
+      <div class="flex items-center justify-between border-b border-[#2a2436] pb-3">
+        <h3 class="font-bold text-base text-white">Alterar Senha da Proprietária</h3>
+        <button id="btn-close-pw-modal" class="text-slate-400 hover:text-white p-1">✕</button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="text-[11px] font-semibold text-slate-400 uppercase block mb-1">Nova Senha / PIN</label>
+          <input type="password" id="input-new-pw" placeholder="Digite a nova senha" class="w-full bg-[#121016] border border-[#322945] rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none" />
+        </div>
+        <button id="btn-save-pw" class="w-full py-2.5 rounded-xl bg-[#522785] hover:bg-[#602e9c] text-white text-xs font-semibold">Salvar Nova Senha</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Aprimorado: Relatório de Fechamento Profissional -->
+  <div id="modal-report" class="fixed inset-0 bg-black/80 flex items-center justify-center p-3 sm:p-5 z-50 hidden overflow-y-auto">
+    <div class="surface-card print-surface max-w-3xl w-full rounded-2xl p-5 sm:p-6 border border-[#352d47] space-y-5 my-auto max-h-[92vh] flex flex-col">
+      
+      <!-- Cabeçalho do Modal -->
+      <div class="flex items-start sm:items-center justify-between border-b border-[#2a2436] pb-4 gap-3 shrink-0">
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="font-bold text-lg text-slate-100">Demonstrativo de Fechamento & Auditoria de Materiais</h3>
+            <span id="report-badge-date" class="text-[11px] font-semibold px-2.5 py-0.5 rounded-md bg-[#251f30] text-purple-200 border border-[#362d47]">Hoje</span>
+          </div>
+          <p id="report-period-subtitle" class="text-xs text-slate-400 mt-0.5">Mont' Açaí • Resumo consolidado de caixa, copos, isopores, colheres e tampas</p>
+        </div>
+        <button id="btn-close-report" class="no-print text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-[#251f30] transition">✕</button>
+      </div>
+
+      <!-- Abas de Visualização -->
+      <div class="no-print flex items-center justify-between gap-2 bg-[#14111a] p-1 rounded-xl border border-[#262030] shrink-0">
+        <button id="tab-report-visual" class="flex-1 py-2 px-3 rounded-lg text-xs font-semibold bg-[#2d243d] text-white transition">
+          Visão Detalhada (Financeiro + Estoque de Materiais)
+        </button>
+        <button id="tab-report-text" class="flex-1 py-2 px-3 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition">
+          Modelo Texto (WhatsApp da Proprietária)
+        </button>
+      </div>
+
+      <!-- Conteúdo Rolável do Relatório -->
+      <div class="overflow-y-auto pr-1 space-y-5 flex-1">
+        
+        <!-- ABA 1: PAINEL VISUAL ESTRUTURADO -->
+        <div id="report-visual-view" class="space-y-5">
+          
+          <!-- Linha 1: 4 Indicadores Executivos -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="surface-card-subtle print-surface p-3.5 rounded-xl">
+              <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block">Receita Total</span>
+              <span id="rep-kpi-revenue" class="text-lg font-bold text-[#6ee7b7] mt-0.5 block">R$ 0,00</span>
+              <span id="rep-kpi-sales-count" class="text-[10px] text-slate-500">0 vendas pagas</span>
+            </div>
+            <div class="surface-card-subtle print-surface p-3.5 rounded-xl">
+              <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block">Ticket Médio</span>
+              <span id="rep-kpi-ticket" class="text-lg font-bold text-slate-100 mt-0.5 block">R$ 0,00</span>
+              <span id="rep-kpi-price-kg" class="text-[10px] text-slate-500">R$ 0,00 / kg vendido</span>
+            </div>
+            <div class="surface-card-subtle print-surface p-3.5 rounded-xl">
+              <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block">Copos / Isopores</span>
+              <span id="rep-kpi-packages" class="text-lg font-bold text-purple-200 mt-0.5 block">0 un</span>
+              <span id="rep-kpi-packages-detail" class="text-[10px] text-slate-500">0 venda • 0 interno</span>
+            </div>
+            <div class="surface-card-subtle print-surface p-3.5 rounded-xl">
+              <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block">Colheres & Tampas</span>
+              <span id="rep-kpi-spoons" class="text-lg font-bold text-[#fcd34d] mt-0.5 block">0 colheres</span>
+              <span id="rep-kpi-lids" class="text-[10px] text-slate-500">0 tampas saídas</span>
+            </div>
+          </div>
+
+          <!-- Linha 2: Auditoria Completa de Materiais (Inicial vs Saídas vs Saldo em Balcão) -->
+          <div class="surface-card-subtle print-surface rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">1. Auditoria de Materiais (Copos, Isopores, Colheres e Tampas)</h4>
+              <span class="text-[11px] text-purple-300">Controle da Proprietária</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="border-b border-[#262030] text-slate-400 text-[11px]">
+                    <th class="py-2 font-semibold">Material / Insumo</th>
+                    <th class="py-2 font-semibold text-center">Estoque Inicial</th>
+                    <th class="py-2 font-semibold text-center">Saída Vendas</th>
+                    <th class="py-2 font-semibold text-center">Consumo / Avulso</th>
+                    <th class="py-2 font-semibold text-center">Total que Saiu</th>
+                    <th class="py-2 font-semibold text-right">Saldo no Balcão</th>
+                  </tr>
+                </thead>
+                <tbody id="rep-table-materials-audit" class="divide-y divide-[#201b29]">
+                  <!-- Gerado via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Linha 3: Conferência Financeira por Meio de Pagamento -->
+          <div class="surface-card-subtle print-surface rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">2. Conferência Financeira por Forma de Pagamento</h4>
+              <span class="text-[11px] text-slate-500">Conferência de Gaveta & Maquininha</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="border-b border-[#262030] text-slate-400 text-[11px]">
+                    <th class="py-2 font-semibold">Meio de Pagamento</th>
+                    <th class="py-2 font-semibold text-center">Qtd. Vendas</th>
+                    <th class="py-2 font-semibold text-center">Participação</th>
+                    <th class="py-2 font-semibold text-right">Valor Acumulado</th>
+                  </tr>
+                </thead>
+                <tbody id="rep-table-payments" class="divide-y divide-[#201b29]">
+                  <!-- Gerado via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Linha 4: Detalhamento de Consumo Interno / Baixas Avulsas -->
+          <div class="surface-card-subtle print-surface rounded-xl p-4 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">3. Registro de Consumo Interno & Baixas Avulsas</h4>
+              <span id="rep-internal-summary-badge" class="text-[11px] text-[#fcd34d] font-medium">0 registros</span>
+            </div>
+            <div id="rep-internal-list" class="text-xs text-slate-400 space-y-1.5">
+              <!-- Gerado via JS -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ABA 2: TEXTO FORMATADO PARA WHATSAPP -->
+        <div id="report-text-view" class="hidden space-y-2">
+          <p class="text-xs text-slate-400">Texto pronto e alinhado para enviar no WhatsApp da proprietária:</p>
+          <textarea id="report-text-area" readonly class="w-full h-80 bg-[#110e16] border border-[#2c2538] rounded-xl p-3.5 text-xs font-mono text-slate-200 focus:outline-none resize-none leading-relaxed"></textarea>
+        </div>
+
+      </div>
+
+      <!-- Rodapé de Ações do Modal -->
+      <div class="no-print flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[#2a2436] shrink-0">
+        <div class="flex items-center gap-2">
+          <button id="btn-export-csv" class="px-3.5 py-2.5 rounded-xl bg-[#1f1a29] hover:bg-[#2a2338] text-slate-200 border border-[#332b42] font-semibold text-xs flex items-center gap-1.5 transition scale-tap">
+            <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Baixar Planilha (CSV)
+          </button>
+          <button id="btn-print-report" class="px-3.5 py-2.5 rounded-xl bg-[#1f1a29] hover:bg-[#2a2338] text-slate-200 border border-[#332b42] font-semibold text-xs flex items-center gap-1.5 transition scale-tap">
+            <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Imprimir / PDF
+          </button>
+        </div>
+
+        <button id="btn-copy-report" class="px-4 py-2.5 rounded-xl bg-[#522785] hover:bg-[#602e9c] text-white border border-[#6b37ab] font-semibold text-xs flex items-center gap-1.5 transition scale-tap">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+          Copiar Resumo p/ WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Confirmar Fechamento de Caixa -->
+  <div id="modal-clear-shift" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
+    <div class="surface-card max-w-sm w-full rounded-2xl p-6 border border-[#3a2832] space-y-4">
+      <div class="w-12 h-12 rounded-xl bg-[#2b1c22] text-rose-400 flex items-center justify-center border border-[#422831] mx-auto">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      </div>
+
+      <div class="text-center">
+        <h3 class="font-bold text-base text-slate-100">Fechar Caixa e Zerar Turno?</h3>
+        <p class="text-xs text-slate-400 mt-1">Essa ação limpará os lançamentos do dia e atualizará o estoque inicial com o saldo restante atual.</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 pt-2">
+        <button id="btn-cancel-modal" class="py-2.5 rounded-xl bg-[#252030] hover:bg-[#302a3d] text-slate-300 font-semibold text-xs transition">Cancelar</button>
+        <button id="btn-confirm-clear" class="py-2.5 rounded-xl bg-rose-700 hover:bg-rose-600 text-white font-semibold text-xs transition scale-tap">Sim, Zerar Turno</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Feedback -->
+  <div id="toast-notification" class="fixed bottom-6 right-6 bg-[#1f1b29] border border-[#38304a] text-slate-200 px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 transition-all duration-300 transform translate-y-20 opacity-0 pointer-events-none z-50">
+    <svg class="w-4 h-4 text-[#6ee7b7] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+    <span id="toast-message" class="text-xs font-semibold">Operação realizada com sucesso!</span>
+  </div>
+
+  <script>
+    // Opções de embalagens
+    const PACKAGING_OPTIONS = [
+      { id: 'copo_500', label: 'Copo de 500', volume: '500ml', icon: 'cup' },
+      { id: 'copo_700', label: 'Copo de 700', volume: '700ml', icon: 'cup' },
+      { id: 'isopor_500', label: 'Isopor de 500', volume: '500ml Térmico', icon: 'box' },
+    ];
+
+    // Catálogo de Todos os Materiais Controlados pela Proprietária
+    const MATERIALS_CATALOG = [
+      { key: 'copo_500', label: 'Copo de 500', unit: 'un', defaultStock: 100 },
+      { key: 'copo_700', label: 'Copo de 700', unit: 'un', defaultStock: 100 },
+      { key: 'isopor_500', label: 'Isopor de 500', unit: 'un', defaultStock: 50 },
+      { key: 'colheres', label: 'Colheres Descartáveis', unit: 'un', defaultStock: 250 },
+      { key: 'tampas', label: 'Tampas', unit: 'un', defaultStock: 150 },
+    ];
+
+    // Formas de Pagamento
+    const PAYMENT_METHODS = [
+      { id: 'PIX', label: 'PIX' },
+      { id: 'DEBITO', label: 'Débito' },
+      { id: 'CREDITO', label: 'Crédito' },
+      { id: 'DINHEIRO', label: 'Dinheiro' },
+    ];
+
+    // Estado Geral da Aplicação
+    const state = {
+      transactions: [],
+      initialStock: {
+        copo_500: 100,
+        copo_700: 100,
+        isopor_500: 50,
+        colheres: 250,
+        tampas: 150,
+      },
+      isOwnerLoggedIn: false,
+      ownerPassword: '1234',
+      pendingOwnerAction: null,
+      currentType: 'VENDA', // 'VENDA' | 'CONSUMO_INTERNO'
+      selectedPackaging: PACKAGING_OPTIONS[0],
+      selectedPayment: PAYMENT_METHODS[0].label,
+      activeFilter: 'TODOS',
+      customLogo: null,
+    };
+
+    function formatBRL(val) {
+      return (Number(val) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatKg(grams) {
+      return ((Number(grams) || 0) / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast-notification');
+      const msgEl = document.getElementById('toast-message');
+      msgEl.textContent = message;
+      toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+      }, 3200);
+    }
+
+    // Mapeia o nome do recipiente para a chave de estoque
+    function getPackageKeyByLabel(label) {
+      const found = PACKAGING_OPTIONS.find(p => p.label === label);
+      return found ? found.id : null;
+    }
+
+    // Carregar dados salvos
+    function loadAppData() {
+      try {
+        const savedPw = localStorage.getItem('mont_acai_owner_pw');
+        if (savedPw) state.ownerPassword = savedPw;
+
+        const savedStock = localStorage.getItem('mont_acai_stock_v1');
+        if (savedStock) {
+          state.initialStock = { ...state.initialStock, ...JSON.parse(savedStock) };
+        }
+
+        const raw = localStorage.getItem('acai_flow_v3');
+        if (raw) {
+          state.transactions = JSON.parse(raw);
+        } else {
+          state.transactions = [
+            {
+              id: 'tx-1',
+              timestamp: '14:30',
+              packaging: 'Copo de 500',
+              packageKey: 'copo_500',
+              weight: 520,
+              quantity: 1,
+              spoons: 1,
+              lids: 0,
+              unitPrice: 24.50,
+              total: 24.50,
+              type: 'VENDA',
+              paymentMethod: 'PIX',
+              notes: 'Morango e leite ninho',
+            },
+            {
+              id: 'tx-2',
+              timestamp: '15:10',
+              packaging: 'Copo de 700',
+              packageKey: 'copo_700',
+              weight: 715,
+              quantity: 1,
+              spoons: 2,
+              lids: 1,
+              unitPrice: 32.00,
+              total: 32.00,
+              type: 'VENDA',
+              paymentMethod: 'Crédito',
+              notes: 'Para viagem (2 colheres)',
+            },
+            {
+              id: 'tx-3',
+              timestamp: '15:45',
+              packaging: 'Isopor de 500',
+              packageKey: 'isopor_500',
+              weight: 510,
+              quantity: 1,
+              spoons: 1,
+              lids: 1,
+              unitPrice: 0,
+              total: 0,
+              type: 'CONSUMO_INTERNO',
+              paymentMethod: 'Consumo Equipe',
+              notes: 'Lanche da tarde (Carlos)',
+            }
+          ];
+          saveTransactions();
+        }
+      } catch (e) {
+        state.transactions = [];
+      }
+    }
+
+    function saveTransactions() {
+      try {
+        localStorage.setItem('acai_flow_v3', JSON.stringify(state.transactions));
+      } catch (e) {
+        console.error('Falha de armazenamento:', e);
+      }
+    }
+
+    function saveStock() {
+      try {
+        localStorage.setItem('mont_acai_stock_v1', JSON.stringify(state.initialStock));
+      } catch (e) {
+        console.error('Erro ao salvar estoque:', e);
+      }
+    }
+
+    // Calcula auditoria completa de materiais (Inicial, Saídas Venda, Saídas Interno/Perda, Total Saído, Saldo)
+    function computeMaterialsUsage() {
+      const usage = {};
+      MATERIALS_CATALOG.forEach(mat => {
+        usage[mat.key] = {
+          key: mat.key,
+          label: mat.label,
+          initial: Number(state.initialStock[mat.key]) || 0,
+          soldOut: 0,
+          internalOut: 0,
+          totalOut: 0,
+          remaining: 0,
+        };
+      });
+
+      state.transactions.forEach(tx => {
+        const isVenda = tx.type === 'VENDA';
+        const qty = Number(tx.quantity) || 0;
+        const spoons = tx.spoons !== undefined ? Number(tx.spoons) : qty;
+        const lids = tx.lids !== undefined ? Number(tx.lids) : 0;
+
+        // Se for baixa avulsa de material específico
+        if (tx.extraMaterialKey && usage[tx.extraMaterialKey]) {
+          usage[tx.extraMaterialKey].internalOut += qty;
+        } else {
+          // Recipiente normal
+          const pkgKey = tx.packageKey || getPackageKeyByLabel(tx.packaging);
+          if (pkgKey && usage[pkgKey]) {
+            if (isVenda) usage[pkgKey].soldOut += qty;
+            else usage[pkgKey].internalOut += qty;
+          }
+        }
+
+        // Colheres e tampas
+        if (spoons > 0) {
+          if (isVenda) usage.colheres.soldOut += spoons;
+          else usage.colheres.internalOut += spoons;
+        }
+        if (lids > 0) {
+          if (isVenda) usage.tampas.soldOut += lids;
+          else usage.tampas.internalOut += lids;
+        }
+      });
+
+      Object.values(usage).forEach(item => {
+        item.totalOut = item.soldOut + item.internalOut;
+        item.remaining = Math.max(0, item.initial - item.totalOut);
+      });
+
+      return usage;
+    }
+
+    // Renderiza os cards de estoque no Painel da Proprietária
+    function renderOwnerMaterialsPanel() {
+      const grid = document.getElementById('materials-stock-grid');
+      if (!grid) return;
+
+      const usage = computeMaterialsUsage();
+      grid.innerHTML = Object.values(usage).map(item => {
+        const isLow = item.remaining <= 15;
+        return `
+          <div class="surface-card-subtle p-3.5 rounded-xl border ${isLow ? 'border-amber-700/70' : 'border-[#262030]'} flex flex-col justify-between space-y-2">
+            <div>
+              <div class="flex items-center justify-between gap-1">
+                <span class="text-xs font-bold text-slate-100">${item.label}</span>
+                ${isLow ? `<span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800">Baixo</span>` : ''}
+              </div>
+              <span class="text-[10px] text-slate-500 block">Inicial: ${item.initial} un</span>
+            </div>
+
+            <div class="pt-1 border-t border-[#221d2b] flex items-baseline justify-between">
+              <div>
+                <span class="text-[10px] text-slate-400 block">Saíram Hoje</span>
+                <span class="text-sm font-bold text-rose-300">-${item.totalOut} un</span>
+              </div>
+              <div class="text-right">
+                <span class="text-[10px] text-slate-400 block">Restam</span>
+                <span class="text-base font-extrabold ${isLow ? 'text-[#fcd34d]' : 'text-[#6ee7b7]'}">${item.remaining} un</span>
+              </div>
+            </div>
+
+            <div class="text-[10px] text-slate-500 flex justify-between">
+              <span>Venda: ${item.soldOut}</span>
+              <span>Int./Perda: ${item.internalOut}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function calculateMetrics() {
+      let revenue = 0;
+      let salesCount = 0;
+      let soldUnits = 0;
+      let totalWeightSold = 0;
+      let internalUnits = 0;
+
+      state.transactions.forEach(tx => {
+        const qty = Number(tx.quantity) || 0;
+        const weightTotal = (Number(tx.weight) || 0) * qty;
+
+        if (tx.type === 'VENDA') {
+          revenue += (Number(tx.total) || 0);
+          salesCount += 1;
+          soldUnits += qty;
+          totalWeightSold += weightTotal;
+        } else if (!tx.extraMaterialKey) {
+          internalUnits += qty;
+        }
+      });
+
+      const usage = computeMaterialsUsage();
+      const totalCupsOut = usage.copo_500.totalOut + usage.copo_700.totalOut + usage.isopor_500.totalOut;
+      const avgTicket = salesCount > 0 ? (revenue / salesCount) : 0;
+
+      document.getElementById('metric-revenue').textContent = `R$ ${formatBRL(revenue)}`;
+      document.getElementById('metric-avg-ticket').textContent = `Ticket médio: R$ ${formatBRL(avgTicket)}`;
+      document.getElementById('metric-sold-units').textContent = `${totalCupsOut} un`;
+      document.getElementById('metric-cups-breakdown').textContent = `${soldUnits} vendas • ${totalCupsOut - soldUnits} interno`;
+      document.getElementById('metric-total-weight').textContent = `${formatKg(totalWeightSold)} kg`;
+      document.getElementById('metric-weight-grams').textContent = `${totalWeightSold.toLocaleString('pt-BR')}g pesados`;
+      document.getElementById('metric-spoons-out').textContent = `${usage.colheres.totalOut} colheres`;
+      document.getElementById('metric-lids-out').textContent = `${usage.tampas.totalOut} tampas utilizadas`;
+      document.getElementById('tx-counter-text').textContent = `${state.transactions.length} registros gravados`;
+
+      renderOwnerMaterialsPanel();
+    }
+
+    function renderPackagingButtons() {
+      const container = document.getElementById('packaging-options');
+      container.innerHTML = '';
+
+      PACKAGING_OPTIONS.forEach(pkg => {
+        const isSelected = state.selectedPackaging.id === pkg.id;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `p-3 rounded-xl text-center border text-xs font-semibold transition scale-tap flex flex-col items-center justify-center gap-1 ${
+          isSelected 
+            ? 'border-[#6b37ab] bg-[#2a1d3d] text-slate-100'
+            : 'border-[#262030] bg-[#14111a] text-slate-400 hover:border-[#352d42] hover:text-slate-200'
+        }`;
+
+        const iconSvg = pkg.icon === 'box'
+          ? `<svg class="w-5 h-5 ${isSelected ? 'text-purple-300' : 'text-slate-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>`
+          : `<svg class="w-5 h-5 ${isSelected ? 'text-purple-300' : 'text-slate-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 8l1.5 12a2 2 0 002 2h5a2 2 0 002-2L18 8M5 8h14M9 4h6"/></svg>`;
+
+        btn.innerHTML = `
+          ${iconSvg}
+          <span class="leading-tight mt-0.5">${pkg.label}</span>
+          <span class="text-[10px] text-slate-500 font-normal">${pkg.volume}</span>
+        `;
+        btn.onclick = () => {
+          state.selectedPackaging = pkg;
+          renderPackagingButtons();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function renderPaymentButtons() {
+      const container = document.getElementById('payment-methods');
+      container.innerHTML = '';
+
+      PAYMENT_METHODS.forEach(pm => {
+        const isSelected = state.selectedPayment === pm.label;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `py-2.5 px-2 rounded-xl border text-xs font-semibold text-center transition scale-tap flex items-center justify-center gap-1 ${
+          isSelected
+            ? 'border-[#3b6e5c] bg-[#1c2e28] text-[#6ee7b7]'
+            : 'border-[#262030] bg-[#14111a] text-slate-400 hover:border-[#352d42] hover:text-slate-200'
+        }`;
+        btn.textContent = pm.label;
+        btn.onclick = () => {
+          state.selectedPayment = pm.label;
+          renderPaymentButtons();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function updateSubtotal() {
+      const qtyInput = document.getElementById('input-qty');
+      const valInput = document.getElementById('input-val');
+      const subtotalEl = document.getElementById('display-subtotal');
+      const formulaEl = document.getElementById('display-formula');
+
+      const qty = parseInt(qtyInput.value, 10) || 1;
+      const unitVal = parseFloat(valInput.value) || 0;
+
+      if (state.currentType === 'CONSUMO_INTERNO') {
+        subtotalEl.textContent = 'R$ 0,00';
+        formulaEl.textContent = `${qty}x consumo interno (baixa apenas estoque)`;
+      } else {
+        const total = qty * unitVal;
+        subtotalEl.textContent = `R$ ${formatBRL(total)}`;
+        formulaEl.textContent = `${qty}x de R$ ${formatBRL(unitVal)}`;
+      }
+    }
+
+    function setupTypeToggle() {
+      const vendaBtn = document.getElementById('type-venda-btn');
+      const consumoBtn = document.getElementById('type-consumo-btn');
+      const valInput = document.getElementById('input-val');
+      const paymentContainer = document.getElementById('payment-method-container');
+      const notesLabel = document.getElementById('notes-label');
+      const notesInput = document.getElementById('input-notes');
+
+      vendaBtn.onclick = () => {
+        state.currentType = 'VENDA';
+        vendaBtn.className = 'py-2.5 px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-2 bg-[#4c2478] text-white scale-tap';
+        consumoBtn.className = 'py-2.5 px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-2 text-slate-400 hover:text-slate-200 scale-tap';
+        
+        valInput.disabled = false;
+        valInput.value = '';
+        paymentContainer.style.display = 'block';
+        notesLabel.textContent = 'Observação (Opcional)';
+        notesInput.placeholder = 'Ex: Morango e leite ninho, sem calda...';
+        updateSubtotal();
+      };
+
+      consumoBtn.onclick = () => {
+        state.currentType = 'CONSUMO_INTERNO';
+        consumoBtn.className = 'py-2.5 px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-2 bg-[#6b4c1b] text-amber-100 scale-tap';
+        vendaBtn.className = 'py-2.5 px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-2 text-slate-400 hover:text-slate-200 scale-tap';
+        
+        valInput.disabled = true;
+        valInput.value = '0.00';
+        paymentContainer.style.display = 'none';
+        notesLabel.textContent = 'Colaborador / Motivo do Consumo';
+        notesInput.placeholder = 'Ex: Lanche da tarde (João)';
+        updateSubtotal();
+      };
+    }
+
+    function handleCreateTransaction() {
+      const weightInput = document.getElementById('input-weight');
+      const valInput = document.getElementById('input-val');
+      const qtyInput = document.getElementById('input-qty');
+      const spoonsInput = document.getElementById('input-spoons');
+      const lidsInput = document.getElementById('input-lids');
+      const notesInput = document.getElementById('input-notes');
+
+      const weight = parseFloat(weightInput.value);
+      const val = parseFloat(valInput.value);
+      const qty = parseInt(qtyInput.value, 10) || 1;
+      const spoons = Math.max(0, parseInt(spoonsInput.value, 10) || 0);
+      const lids = Math.max(0, parseInt(lidsInput.value, 10) || 0);
+
+      if (!weight || weight <= 0) {
+        showToast('Informe o peso aferido na balança (em gramas)!');
+        weightInput.focus();
+        return;
+      }
+
+      if (state.currentType === 'VENDA' && (isNaN(val) || val <= 0)) {
+        showToast('Informe o valor da venda!');
+        valInput.focus();
+        return;
+      }
+
+      const isVenda = state.currentType === 'VENDA';
+      const now = new Date();
+      const timeFormatted = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      const finalPrice = isVenda ? val : 0;
+
+      const newTx = {
+        id: 'tx-' + Date.now(),
+        timestamp: timeFormatted,
+        packaging: state.selectedPackaging.label,
+        packageKey: state.selectedPackaging.id,
+        weight: weight,
+        quantity: qty,
+        spoons: spoons,
+        lids: lids,
+        unitPrice: finalPrice,
+        total: qty * finalPrice,
+        type: state.currentType,
+        paymentMethod: isVenda ? state.selectedPayment : 'Consumo Equipe',
+        notes: notesInput.value.trim(),
+      };
+
+      state.transactions.unshift(newTx);
+      saveTransactions();
+      renderTransactions();
+      calculateMetrics();
+
+      // Reset mantendo padrão de 1 colher para agilizar próximo atendimento
+      weightInput.value = '';
+      if (isVenda) valInput.value = '';
+      qtyInput.value = '1';
+      spoonsInput.value = '1';
+      lidsInput.value = '0';
+      notesInput.value = '';
+      updateSubtotal();
+      showToast(isVenda ? 'Venda e saída de materiais registradas!' : 'Consumo interno e materiais registrados!');
+    }
+
+    // Exige login da proprietária para ações sensíveis (excluir registro ou zerar turno)
+    function requireOwnerAuth(actionCallback) {
+      if (state.isOwnerLoggedIn) {
+        actionCallback();
+      } else {
+        state.pendingOwnerAction = actionCallback;
+        document.getElementById('input-owner-password').value = '';
+        document.getElementById('modal-owner-login').classList.remove('hidden');
+        document.getElementById('input-owner-password').focus();
+        showToast('Digite a senha da proprietária para continuar.');
+      }
+    }
+
+    window.deleteTx = function(id) {
+      requireOwnerAuth(() => {
+        state.transactions = state.transactions.filter(t => t.id !== id);
+        saveTransactions();
+        renderTransactions();
+        calculateMetrics();
+        showToast('Registro excluído pela proprietária.');
+      });
+    };
+
+    function renderTransactions() {
+      const listContainer = document.getElementById('tx-list-container');
+      const filtered = state.transactions.filter(tx => {
+        if (state.activeFilter === 'TODOS') return true;
+        return tx.type === state.activeFilter;
+      });
+
+      if (filtered.length === 0) {
+        listContainer.innerHTML = `
+          <div class="py-14 text-center text-slate-500">
+            <svg class="w-10 h-10 mx-auto text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+            <p class="text-xs">Nenhum lançamento encontrado para este filtro.</p>
+          </div>
+        `;
+        return;
+      }
+
+      listContainer.innerHTML = filtered.map(tx => {
+        const isVenda = tx.type === 'VENDA';
+        const qty = Number(tx.quantity) || 1;
+        const spoons = tx.spoons !== undefined ? Number(tx.spoons) : qty;
+        const lids = tx.lids !== undefined ? Number(tx.lids) : 0;
+        const totalItemWeight = (Number(tx.weight) || 0) * qty;
+        const weightFormatted = tx.weight ? `${qty > 1 ? `${qty}x ${tx.weight}g (${totalItemWeight}g)` : `${tx.weight}g`}` : 'Baixa Material';
+
+        return `
+          <div class="py-3 px-2 flex items-center justify-between gap-3 group hover:bg-[#15121c] rounded-xl transition">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-semibold text-sm text-slate-100">${qty > 1 ? `${qty}x ` : ''}${tx.packaging || 'Açaí'}</span>
+                ${tx.weight ? `
+                  <span class="px-2 py-0.5 text-[10px] font-medium rounded-md bg-[#221f2e] text-slate-300 border border-[#312c42]">
+                    ${weightFormatted}
+                  </span>
+                ` : ''}
+                ${spoons > 0 ? `
+                  <span class="px-2 py-0.5 text-[10px] font-medium rounded-md bg-[#2a2317] text-[#fcd34d] border border-[#3d3220]">
+                    ${spoons} colher${spoons > 1 ? 'es' : ''}
+                  </span>
+                ` : ''}
+                ${lids > 0 ? `
+                  <span class="px-2 py-0.5 text-[10px] font-medium rounded-md bg-[#261e36] text-purple-200 border border-[#382b4f]">
+                    ${lids} tampa${lids > 1 ? 's' : ''}
+                  </span>
+                ` : ''}
+                <span class="px-2 py-0.5 text-[10px] font-semibold rounded-md ${
+                  isVenda
+                    ? 'bg-[#1d2e28] text-[#6ee7b7] border border-[#2b473d]'
+                    : 'bg-[#2e2518] text-[#fcd34d] border border-[#453722]'
+                }">
+                  ${isVenda ? 'Venda' : 'Consumo / Baixa'}
+                </span>
+              </div>
+              <div class="text-xs text-slate-400 flex flex-wrap items-center gap-1.5">
+                <span>${tx.paymentMethod}</span>
+                ${tx.notes ? `<span>•</span> <span class="text-slate-400 italic text-[11px]">"${tx.notes}"</span>` : ''}
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="text-right">
+                <div class="text-sm font-bold ${isVenda ? 'text-[#6ee7b7]' : 'text-slate-400'}">
+                  ${isVenda ? `R$ ${formatBRL(tx.total)}` : 'R$ 0,00'}
+                </div>
+                <div class="text-[10px] text-slate-500">${tx.timestamp}</div>
+              </div>
+              <button onclick="deleteTx('${tx.id}')" title="Excluir Lançamento (Requer Senha da Proprietária)" class="text-slate-500 hover:text-rose-400 p-1.5 hover:bg-[#241e2e] rounded-lg transition scale-tap">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Atualiza interface de acordo com o login da Proprietária
+    function updateOwnerUI() {
+      const panel = document.getElementById('owner-materials-panel');
+      const roleBadge = document.getElementById('role-badge');
+      const btnLabel = document.getElementById('btn-owner-label');
+
+      if (state.isOwnerLoggedIn) {
+        panel.classList.remove('hidden');
+        roleBadge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-[#35234d] text-purple-200 border border-[#4c346e]';
+        roleBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-purple-300 mr-1.5"></span>Modo Proprietária Ativo`;
+        btnLabel.textContent = 'Painel da Proprietária (Ativo)';
+        renderOwnerMaterialsPanel();
+      } else {
+        panel.classList.add('hidden');
+        roleBadge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-[#232f29] text-[#6ee7b7] border border-[#2f4239]';
+        roleBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-[#34d399] mr-1.5"></span>Modo Balcão (PDV)`;
+        btnLabel.textContent = 'Login Proprietária';
+      }
+    }
+
+    // Consolida dados completos para o Relatório de Fechamento
+    function buildReportData() {
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('pt-BR');
+      const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+      const timestamps = state.transactions.map(t => t.timestamp).filter(Boolean);
+      const firstTime = timestamps.length > 0 ? timestamps[timestamps.length - 1] : timeStr;
+      const lastTime = timestamps.length > 0 ? timestamps[0] : timeStr;
+
+      let revenue = 0;
+      let salesTxCount = 0;
+      let soldUnits = 0;
+      let soldWeight = 0;
+      let internalUnits = 0;
+      let internalWeight = 0;
+
+      const payments = {};
+      PAYMENT_METHODS.forEach(pm => {
+        payments[pm.label] = { count: 0, total: 0 };
+      });
+
+      const internalItems = [];
+
+      state.transactions.forEach(tx => {
+        const qty = Number(tx.quantity) || 1;
+        const itemWeight = (Number(tx.weight) || 0) * qty;
+
+        if (tx.type === 'VENDA') {
+          const val = Number(tx.total) || 0;
+          revenue += val;
+          salesTxCount += 1;
+          soldUnits += qty;
+          soldWeight += itemWeight;
+
+          const pm = tx.paymentMethod || 'Outros';
+          if (!payments[pm]) payments[pm] = { count: 0, total: 0 };
+          payments[pm].count += 1;
+          payments[pm].total += val;
+        } else {
+          if (!tx.extraMaterialKey) {
+            internalUnits += qty;
+          }
+          internalWeight += itemWeight;
+          internalItems.push(tx);
+        }
+      });
+
+      const materialsUsage = computeMaterialsUsage();
+      const totalCupsOut = materialsUsage.copo_500.totalOut + materialsUsage.copo_700.totalOut + materialsUsage.isopor_500.totalOut;
+      const avgTicket = salesTxCount > 0 ? (revenue / salesTxCount) : 0;
+      const avgPricePerKg = soldWeight > 0 ? (revenue / (soldWeight / 1000)) : 0;
+      const totalWeightOut = soldWeight + internalWeight;
+
+      return {
+        dateStr,
+        timeStr,
+        firstTime,
+        lastTime,
+        revenue,
+        salesTxCount,
+        soldUnits,
+        soldWeight,
+        internalUnits,
+        internalWeight,
+        avgTicket,
+        avgPricePerKg,
+        totalWeightOut,
+        totalCupsOut,
+        payments,
+        materialsUsage,
+        internalItems,
+        totalRecords: state.transactions.length
+      };
+    }
+
+    function populateClosingReport() {
+      const data = buildReportData();
+
+      document.getElementById('report-badge-date').textContent = data.dateStr;
+      document.getElementById('report-period-subtitle').textContent =
+        `Mont' Açaí • Turno das ${data.firstTime} às ${data.lastTime} (${data.totalRecords} lançamentos)`;
+
+      // KPIs
+      document.getElementById('rep-kpi-revenue').textContent = `R$ ${formatBRL(data.revenue)}`;
+      document.getElementById('rep-kpi-sales-count').textContent = `${data.salesTxCount} vendas (${data.soldUnits} copos/isop.)`;
+      document.getElementById('rep-kpi-ticket').textContent = `R$ ${formatBRL(data.avgTicket)}`;
+      document.getElementById('rep-kpi-price-kg').textContent = `Média: R$ ${formatBRL(data.avgPricePerKg)} / kg`;
+      document.getElementById('rep-kpi-packages').textContent = `${data.totalCupsOut} un`;
+      document.getElementById('rep-kpi-packages-detail').textContent = `${data.soldUnits} venda • ${data.totalCupsOut - data.soldUnits} int./perda`;
+      document.getElementById('rep-kpi-spoons').textContent = `${data.materialsUsage.colheres.totalOut} colheres`;
+      document.getElementById('rep-kpi-lids').textContent = `${data.materialsUsage.tampas.totalOut} tampas saídas`;
+
+      // Tabela 1: Auditoria de Materiais (Copos, Isopores, Colheres e Tampas)
+      const matRows = Object.values(data.materialsUsage).map(mat => {
+        return `
+          <tr class="text-slate-200">
+            <td class="py-2.5 font-semibold">${mat.label}</td>
+            <td class="py-2.5 text-center text-slate-400">${mat.initial} un</td>
+            <td class="py-2.5 text-center text-slate-300">${mat.soldOut} un</td>
+            <td class="py-2.5 text-center ${mat.internalOut > 0 ? 'text-[#fcd34d]' : 'text-slate-500'}">${mat.internalOut} un</td>
+            <td class="py-2.5 text-center font-bold text-rose-300">-${mat.totalOut} un</td>
+            <td class="py-2.5 text-right font-bold text-[#6ee7b7]">${mat.remaining} un</td>
+          </tr>
+        `;
+      }).join('');
+      document.getElementById('rep-table-materials-audit').innerHTML = matRows;
+
+      // Tabela 2: Pagamentos
+      const paymentRows = Object.entries(data.payments).map(([method, info]) => {
+        const pct = data.revenue > 0 ? ((info.total / data.revenue) * 100).toFixed(1).replace('.', ',') : '0,0';
+        return `
+          <tr class="text-slate-200">
+            <td class="py-2.5 font-semibold">${method}</td>
+            <td class="py-2.5 text-center text-slate-400">${info.count}</td>
+            <td class="py-2.5 text-center text-slate-400">${pct}%</td>
+            <td class="py-2.5 text-right font-bold ${info.total > 0 ? 'text-[#6ee7b7]' : 'text-slate-500'}">R$ ${formatBRL(info.total)}</td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('rep-table-payments').innerHTML = paymentRows + `
+        <tr class="border-t border-[#2f283d] text-slate-100 font-bold bg-[#1a1624]">
+          <td class="py-2.5 pl-2">TOTAL RECEBIDO</td>
+          <td class="py-2.5 text-center">${data.salesTxCount}</td>
+          <td class="py-2.5 text-center">100%</td>
+          <td class="py-2.5 pr-2 text-right text-[#6ee7b7]">R$ ${formatBRL(data.revenue)}</td>
+        </tr>
+      `;
+
+      // Lista 3: Consumo Interno & Baixas Avulsas
+      document.getElementById('rep-internal-summary-badge').textContent =
+        `${data.internalItems.length} ocorrências`;
+
+      const internalContainer = document.getElementById('rep-internal-list');
+      if (data.internalItems.length === 0) {
+        internalContainer.innerHTML = `<p class="text-slate-500 italic">Nenhum consumo interno ou perda avulsa registrada neste turno.</p>`;
+      } else {
+        internalContainer.innerHTML = data.internalItems.map(item => {
+          const qty = Number(item.quantity) || 1;
+          const spoons = item.spoons || 0;
+          const w = (Number(item.weight) || 0) * qty;
+          return `
+            <div class="flex items-center justify-between py-1.5 border-b border-[#201b29] last:border-none">
+              <div>
+                <span class="text-slate-200 font-medium">${qty}x ${item.packaging}</span>
+                ${spoons > 0 ? `<span class="text-[#fcd34d] text-[11px] ml-1">(+${spoons} colher)</span>` : ''}
+                <span class="text-slate-500 mx-1">•</span>
+                <span class="text-slate-300">${item.notes || 'Sem observação'}</span>
+              </div>
+              <div class="text-right text-slate-400 font-mono text-[11px]">
+                ${w > 0 ? `${w}g • ` : ''}${item.timestamp}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Geração do Texto Formatado para WhatsApp da Proprietária
+      let txt = `====================================\n`;
+      txt += `🍧 *FECHAMENTO & ESTOQUE - MONT' AÇAÍ*\n`;
+      txt += `====================================\n`;
+      txt += `📅 *Data:* ${data.dateStr} (${data.firstTime} às ${data.lastTime})\n`;
+      txt += `🧾 *Atendimentos:* ${data.totalRecords} lançamentos (${data.salesTxCount} vendas)\n\n`;
+
+      txt += `------------------------------------\n`;
+      txt += `💰 *1. RESUMO FINANCEIRO*\n`;
+      txt += `------------------------------------\n`;
+      txt += `• *Faturamento Bruto:* R$ ${formatBRL(data.revenue)}\n`;
+      txt += `• *Ticket Médio:* R$ ${formatBRL(data.avgTicket)}\n`;
+      txt += `• *Peso Total Vendido:* ${formatKg(data.soldWeight)} kg (${data.soldWeight}g)\n\n`;
+
+      txt += `*Por Forma de Pagamento:*\n`;
+      for (const [method, info] of Object.entries(data.payments)) {
+        txt += `  ▸ ${method}: R$ ${formatBRL(info.total)} (${info.count}x)\n`;
+      }
+
+      txt += `\n------------------------------------\n`;
+      txt += `📦 *2. CONTROLE DE MATERIAIS (PROPRIETÁRIA)*\n`;
+      txt += `------------------------------------\n`;
+      Object.values(data.materialsUsage).forEach(mat => {
+        txt += `• *${mat.label}:*\n`;
+        txt += `  Inicial: ${mat.initial} | Saíram: -${mat.totalOut} (${mat.soldOut} venda / ${mat.internalOut} int.) | *Restam: ${mat.remaining} un*\n`;
+      });
+
+      if (data.internalItems.length > 0) {
+        txt += `\n------------------------------------\n`;
+        txt += `👤 *3. CONSUMO INTERNO / BAIXAS AVULSAS*\n`;
+        txt += `------------------------------------\n`;
+        data.internalItems.forEach(item => {
+          const qty = Number(item.quantity) || 1;
+          const w = (Number(item.weight) || 0) * qty;
+          txt += `  ▸ [${item.timestamp}] ${qty}x ${item.packaging}${w > 0 ? ` (${w}g)` : ''} - ${item.notes || 'Equipe'}\n`;
+        });
+      }
+
+      txt += `====================================`;
+
+      document.getElementById('report-text-area').value = txt;
+    }
+
+    // Exportar para CSV (Excel)
+    function exportTransactionsCSV() {
+      if (state.transactions.length === 0) {
+        showToast('Não há registros para exportar.');
+        return;
+      }
+
+      const headers = ['Horario', 'Tipo', 'Recipiente_Material', 'Qtd_Recipientes', 'Colheres_Saidas', 'Tampas_Saidas', 'Peso_Total_g', 'Valor_Total_RS', 'Forma_Pagamento', 'Observacao'];
+      const rows = state.transactions.map(tx => {
+        const qty = Number(tx.quantity) || 1;
+        const spoons = tx.spoons !== undefined ? Number(tx.spoons) : qty;
+        const lids = tx.lids !== undefined ? Number(tx.lids) : 0;
+        const wTotal = (Number(tx.weight) || 0) * qty;
+        const vTotal = (Number(tx.total) || 0).toFixed(2).replace('.', ',');
+        const notesClean = (tx.notes || '').replace(/;/g, ',').replace(/"/g, "'");
+
+        return [
+          tx.timestamp,
+          tx.type,
+          tx.packaging,
+          qty,
+          spoons,
+          lids,
+          wTotal,
+          vTotal,
+          tx.paymentMethod,
+          `"${notesClean}"`
+        ].join(';');
+      });
+
+      const csvContent = '\uFEFF' + headers.join(';') + '\n' + rows.join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const today = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `fechamento-mont-acai-${today}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Planilha CSV baixada com sucesso!');
+    }
+
+    function setupLogoManager() {
+      const logoInput = document.getElementById('logo-input');
+      const logoDisplayContainer = document.getElementById('logo-display-container');
+      const btnTrigger = document.getElementById('btn-trigger-upload');
+      const btnRemove = document.getElementById('btn-remove-logo');
+      const customImg = document.getElementById('custom-logo-img');
+      const defaultIcon = document.getElementById('default-logo-icon');
+
+      function applyLogo(dataUrl) {
+        if (dataUrl) {
+          customImg.src = dataUrl;
+          customImg.classList.remove('hidden');
+          defaultIcon.classList.add('hidden');
+          btnRemove.classList.remove('hidden');
+          btnRemove.classList.add('flex');
+        } else {
+          customImg.src = '';
+          customImg.classList.add('hidden');
+          defaultIcon.classList.remove('hidden');
+          btnRemove.classList.add('hidden');
+          btnRemove.classList.remove('flex');
+        }
+      }
+
+      try {
+        const savedLogo = localStorage.getItem('mont_acai_logo_v1');
+        if (savedLogo) {
+          state.customLogo = savedLogo;
+          applyLogo(savedLogo);
+        }
+      } catch (err) {
+        console.warn('Erro ao carregar logo salva:', err);
+      }
+
+      const openPicker = () => logoInput.click();
+      logoDisplayContainer.addEventListener('click', openPicker);
+      if (btnTrigger) btnTrigger.addEventListener('click', openPicker);
+
+      logoInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+          showToast('Por favor, selecione um arquivo de imagem válido.');
+          return;
+        }
+
+        if (file.size > 3 * 1024 * 1024) {
+          showToast('A imagem deve ter até 3MB.');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const base64 = event.target.result;
+          try {
+            localStorage.setItem('mont_acai_logo_v1', base64);
+            state.customLogo = base64;
+            applyLogo(base64);
+            showToast('Logo do Mont\' Açaí atualizada!');
+          } catch (storageError) {
+            showToast('Imagem muito grande para armazenamento local.');
+          }
+        };
+        reader.readAsDataURL(file);
+        logoInput.value = '';
+      });
+
+      btnRemove.addEventListener('click', (e) => {
+        e.stopPropagation();
+        try {
+          localStorage.removeItem('mont_acai_logo_v1');
+        } catch (_) {}
+        state.customLogo = null;
+        applyLogo(null);
+        showToast('Logo padrão restaurada.');
+      });
+    }
+
+    window.onload = function() {
+      loadAppData();
+      setupLogoManager();
+      renderPackagingButtons();
+      renderPaymentButtons();
+      setupTypeToggle();
+      updateSubtotal();
+      calculateMetrics();
+      renderTransactions();
+
+      // Controles de Quantidade de Recipientes, Colheres e Tampas
+      const qtyInput = document.getElementById('input-qty');
+      const spoonsInput = document.getElementById('input-spoons');
+      const lidsInput = document.getElementById('input-lids');
+
+      document.getElementById('qty-plus').onclick = () => {
+        const nextQty = (parseInt(qtyInput.value, 10) || 1) + 1;
+        qtyInput.value = nextQty;
+        spoonsInput.value = nextQty; // Sugere 1 colher por copo automaticamente
+        updateSubtotal();
+      };
+      document.getElementById('qty-minus').onclick = () => {
+        const val = parseInt(qtyInput.value, 10) || 1;
+        if (val > 1) {
+          qtyInput.value = val - 1;
+          spoonsInput.value = val - 1;
+        }
+        updateSubtotal();
+      };
+      qtyInput.oninput = updateSubtotal;
+
+      document.getElementById('spoons-plus').onclick = () => {
+        spoonsInput.value = (parseInt(spoonsInput.value, 10) || 0) + 1;
+      };
+      document.getElementById('spoons-minus').onclick = () => {
+        const val = parseInt(spoonsInput.value, 10) || 0;
+        if (val > 0) spoonsInput.value = val - 1;
+      };
+
+      document.getElementById('lids-plus').onclick = () => {
+        lidsInput.value = (parseInt(lidsInput.value, 10) || 0) + 1;
+      };
+      document.getElementById('lids-minus').onclick = () => {
+        const val = parseInt(lidsInput.value, 10) || 0;
+        if (val > 0) lidsInput.value = val - 1;
+      };
+
+      document.getElementById('input-val').oninput = updateSubtotal;
+      document.getElementById('btn-submit-tx').onclick = handleCreateTransaction;
+
+      // Filtros
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.onclick = () => {
+          document.querySelectorAll('.filter-btn').forEach(b => {
+            b.className = 'filter-btn px-3 py-1 rounded-lg text-slate-400 hover:text-slate-200';
+          });
+          btn.className = 'filter-btn px-3 py-1 rounded-lg bg-[#2d243d] text-slate-100 font-semibold';
+          state.activeFilter = btn.dataset.filter;
+          renderTransactions();
+        };
+      });
+
+      // Login da Proprietária
+      const loginModal = document.getElementById('modal-owner-login');
+      const pwInput = document.getElementById('input-owner-password');
+
+      document.getElementById('btn-owner-access').onclick = () => {
+        if (state.isOwnerLoggedIn) {
+          const panel = document.getElementById('owner-materials-panel');
+          panel.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          state.pendingOwnerAction = null;
+          pwInput.value = '';
+          loginModal.classList.remove('hidden');
+          pwInput.focus();
+        }
+      };
+
+      document.getElementById('btn-close-login').onclick = () => {
+        loginModal.classList.add('hidden');
+        state.pendingOwnerAction = null;
+      };
+
+      function handleConfirmLogin() {
+        if (pwInput.value === state.ownerPassword) {
+          state.isOwnerLoggedIn = true;
+          loginModal.classList.add('hidden');
+          updateOwnerUI();
+          if (state.pendingOwnerAction) {
+            const fn = state.pendingOwnerAction;
+            state.pendingOwnerAction = null;
+            fn();
+          } else {
+            showToast('Bem-vinda! Painel da Proprietária liberado.');
+          }
+        } else {
+          showToast('Senha incorreta! Tente novamente.');
+          pwInput.select();
+        }
+      }
+
+      document.getElementById('btn-confirm-login').onclick = handleConfirmLogin;
+      pwInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleConfirmLogin();
+      });
+
+      document.getElementById('btn-owner-logout').onclick = () => {
+        state.isOwnerLoggedIn = false;
+        updateOwnerUI();
+        showToast('Modo Proprietária bloqueado. De volta ao Modo Balcão.');
+      };
+
+      // Modal de Abastecer / Ajustar Estoque Inicial
+      const stockModal = document.getElementById('modal-stock-adjust');
+      document.getElementById('btn-open-stock-modal').onclick = () => {
+        MATERIALS_CATALOG.forEach(mat => {
+          document.getElementById(`stock-${mat.key}`).value = state.initialStock[mat.key] || 0;
+        });
+        stockModal.classList.remove('hidden');
+      };
+      document.getElementById('btn-close-stock-modal').onclick = () => stockModal.classList.add('hidden');
+      document.getElementById('btn-cancel-stock').onclick = () => stockModal.classList.add('hidden');
+      document.getElementById('btn-save-stock').onclick = () => {
+        MATERIALS_CATALOG.forEach(mat => {
+          const val = parseInt(document.getElementById(`stock-${mat.key}`).value, 10);
+          state.initialStock[mat.key] = isNaN(val) ? 0 : Math.max(0, val);
+        });
+        saveStock();
+        calculateMetrics();
+        stockModal.classList.add('hidden');
+        showToast('Estoque inicial de materiais atualizado!');
+      };
+
+      // Baixa Avulsa / Perda de Material no Painel da Proprietária
+      document.getElementById('btn-register-loss').onclick = () => {
+        const matKey = document.getElementById('extra-loss-item').value;
+        const qty = Math.max(1, parseInt(document.getElementById('extra-loss-qty').value, 10) || 1);
+        const reason = document.getElementById('extra-loss-reason').value.trim() || 'Baixa avulsa / perda';
+        const matObj = MATERIALS_CATALOG.find(m => m.key === matKey);
+        const now = new Date();
+        const timeFormatted = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+        const lossTx = {
+          id: 'tx-' + Date.now(),
+          timestamp: timeFormatted,
+          packaging: `Baixa: ${matObj ? matObj.label : matKey}`,
+          extraMaterialKey: matKey,
+          weight: 0,
+          quantity: matKey === 'colheres' || matKey === 'tampas' ? 0 : qty,
+          spoons: matKey === 'colheres' ? qty : 0,
+          lids: matKey === 'tampas' ? qty : 0,
+          unitPrice: 0,
+          total: 0,
+          type: 'CONSUMO_INTERNO',
+          paymentMethod: 'Baixa de Material',
+          notes: `${qty}x ${matObj ? matObj.label : ''} (${reason})`,
+        };
+
+        // Se for recipiente avulso, quantity guarda a qtd
+        if (matKey !== 'colheres' && matKey !== 'tampas') {
+          lossTx.quantity = qty;
+        }
+
+        state.transactions.unshift(lossTx);
+        saveTransactions();
+        renderTransactions();
+        calculateMetrics();
+        document.getElementById('extra-loss-qty').value = '1';
+        document.getElementById('extra-loss-reason').value = '';
+        showToast('Baixa avulsa de material registrada!');
+      };
+
+      // Alterar Senha da Proprietária
+      const pwModal = document.getElementById('modal-change-password');
+      document.getElementById('btn-open-password-modal').onclick = () => {
+        document.getElementById('input-new-pw').value = '';
+        pwModal.classList.remove('hidden');
+      };
+      document.getElementById('btn-close-pw-modal').onclick = () => pwModal.classList.add('hidden');
+      document.getElementById('btn-save-pw').onclick = () => {
+        const newPw = document.getElementById('input-new-pw').value.trim();
+        if (newPw.length < 3) {
+          showToast('A senha deve ter pelo menos 3 caracteres.');
+          return;
+        }
+        state.ownerPassword = newPw;
+        try {
+          localStorage.setItem('mont_acai_owner_pw', newPw);
+        } catch (_) {}
+        pwModal.classList.add('hidden');
+        showToast('Senha da proprietária alterada com sucesso!');
+      };
+
+      // Modal de Zerar Turno (Protegido pela senha da proprietária)
+      const clearModal = document.getElementById('modal-clear-shift');
+      document.getElementById('btn-open-clear-modal').onclick = () => {
+        requireOwnerAuth(() => {
+          clearModal.classList.remove('hidden');
+        });
+      };
+      document.getElementById('btn-cancel-modal').onclick = () => {
+        clearModal.classList.add('hidden');
+      };
+      document.getElementById('btn-confirm-clear').onclick = () => {
+        // Atualiza o estoque inicial do próximo turno com o saldo restante atual
+        const currentUsage = computeMaterialsUsage();
+        Object.values(currentUsage).forEach(item => {
+          state.initialStock[item.key] = item.remaining;
+        });
+        saveStock();
+
+        state.transactions = [];
+        saveTransactions();
+        renderTransactions();
+        calculateMetrics();
+        clearModal.classList.add('hidden');
+        showToast('Turno zerado! Saldo restante de materiais mantido para o próximo turno.');
+      };
+
+      // Modal de Relatório e Abas
+      const reportModal = document.getElementById('modal-report');
+      const reportTextArea = document.getElementById('report-text-area');
+      const tabVisual = document.getElementById('tab-report-visual');
+      const tabText = document.getElementById('tab-report-text');
+      const viewVisual = document.getElementById('report-visual-view');
+      const viewText = document.getElementById('report-text-view');
+
+      tabVisual.onclick = () => {
+        tabVisual.className = 'flex-1 py-2 px-3 rounded-lg text-xs font-semibold bg-[#2d243d] text-white transition';
+        tabText.className = 'flex-1 py-2 px-3 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition';
+        viewVisual.classList.remove('hidden');
+        viewText.classList.add('hidden');
+      };
+
+      tabText.onclick = () => {
+        tabText.className = 'flex-1 py-2 px-3 rounded-lg text-xs font-semibold bg-[#2d243d] text-white transition';
+        tabVisual.className = 'flex-1 py-2 px-3 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition';
+        viewText.classList.remove('hidden');
+        viewVisual.classList.add('hidden');
+      };
+
+      document.getElementById('btn-export-report').onclick = () => {
+        populateClosingReport();
+        reportModal.classList.remove('hidden');
+      };
+      document.getElementById('btn-close-report').onclick = () => {
+        reportModal.classList.add('hidden');
+      };
+
+      document.getElementById('btn-copy-report').onclick = async () => {
+        populateClosingReport();
+        try {
+          await navigator.clipboard.writeText(reportTextArea.value);
+          showToast('Resumo copiado para colar no WhatsApp!');
+        } catch (err) {
+          viewText.classList.remove('hidden');
+          reportTextArea.select();
+          document.execCommand('copy');
+          showToast('Resumo copiado para a área de transferência!');
+        }
+      };
+
+      document.getElementById('btn-print-report').onclick = () => {
+        tabVisual.click();
+        window.print();
+      };
+
+      document.getElementById('btn-export-csv').onclick = exportTransactionsCSV;
+    };
+  </script>
+</body>
+</html>
