@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
   
   <style>
     * {
@@ -138,7 +139,7 @@
           Relatório Fechamento
         </button>
 
-        <button id="btn-open-clear-modal" class="px-3.5 py-2.5 rounded-xl bg-[#1f1a24] hover:bg-[#2c1d24] text-rose-300/90 hover:text-rose-200 border border-[#2e2636] hover:border-rose-900/60 text-xs font-semibold flex items-center justify-center gap-1.5 transition scale-tap" title="Zerar dados do caixa (Requer acesso da proprietária)">
+        <button id="btn-open-clear-modal" class="px-3.5 py-2.5 rounded-xl bg-[#1f1a24] hover:bg-[#2c1d24] text-rose-300/90 hover:text-rose-200 border border-[#2e2636] hover:border-rose-900/60 text-xs font-semibold flex items-center justify-center gap-1.5 transition scale-tap" title="Zerar dados do caixa (Exige senha da proprietária)">
           <svg class="w-4 h-4 text-rose-400/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
           Zerar Turno
         </button>
@@ -180,7 +181,7 @@
         <!-- Gerado dinamicamente via JS -->
       </div>
 
-      <!-- Registro Rápido de Baixa Avulsa / Perda de Material (ex: copo amassado, colher extra avulsa) -->
+      <!-- Registro Rápido de Baixa Avulsa / Perda de Material -->
       <div class="surface-card-subtle rounded-xl p-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div>
           <span class="text-xs font-semibold text-slate-200 block">Baixa Avulsa ou Perda de Material</span>
@@ -256,14 +257,14 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       
-      <!-- Formulário de Lançamento (Coluna Esquerda) -->
+      <!-- Formulário de Lançamento / Edição (Coluna Esquerda) -->
       <div class="lg:col-span-5 surface-card rounded-2xl p-5 sm:p-6 space-y-4">
         <div class="flex items-center justify-between border-b border-[#2a2436] pb-3">
-          <h2 class="font-bold text-base sm:text-lg text-slate-100 flex items-center gap-2">
+          <h2 id="form-header-title" class="font-bold text-base sm:text-lg text-slate-100 flex items-center gap-2">
             <svg class="w-5 h-5 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Novo Lançamento
           </h2>
-          <span class="text-[11px] text-slate-300 font-medium bg-[#251f30] px-2.5 py-1 rounded-md border border-[#342c44]">Balança & Materiais</span>
+          <span id="form-mode-badge" class="text-[11px] text-slate-300 font-medium bg-[#251f30] px-2.5 py-1 rounded-md border border-[#342c44]">Balança & Materiais</span>
         </div>
 
         <!-- Toggle: Venda vs Consumo Interno -->
@@ -375,10 +376,15 @@
             <span id="display-subtotal" class="text-2xl font-bold text-[#6ee7b7]">R$ 0,00</span>
           </div>
 
-          <button type="button" id="btn-submit-tx" class="w-full py-3.5 rounded-xl font-semibold text-sm transition flex items-center justify-center gap-2 bg-[#522785] hover:bg-[#602e9c] text-white border border-[#6b37ab] scale-tap">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            <span>Confirmar e Dar Baixa nos Materiais</span>
-          </button>
+          <div class="flex gap-2">
+            <button type="button" id="btn-cancel-edit" class="hidden px-4 py-3.5 rounded-xl font-semibold text-xs bg-[#252030] hover:bg-[#312a40] text-slate-300 transition">
+              Cancelar
+            </button>
+            <button type="button" id="btn-submit-tx" class="flex-1 py-3.5 rounded-xl font-semibold text-sm transition flex items-center justify-center gap-2 bg-[#522785] hover:bg-[#602e9c] text-white border border-[#6b37ab] scale-tap">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              <span id="btn-submit-text">Confirmar e Dar Baixa nos Materiais</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -411,7 +417,7 @@
 
         <!-- Rodapé do Histórico -->
         <div class="pt-4 mt-4 border-t border-[#2a2436] text-[11px] text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-2">
-          <span>🔒 Exclusão de registros e ajuste de estoque protegidos por senha da proprietária.</span>
+          <span>🔒 Para <strong>editar</strong> ou <strong>excluir</strong> qualquer venda, é obrigatório informar a senha da proprietária.</span>
           <span class="text-slate-400 font-medium">Auditoria de Copos & Colheres Ativa</span>
         </div>
       </div>
@@ -419,7 +425,7 @@
     </div>
   </div>
 
-  <!-- MODAL DE LOGIN DA PROPRIETÁRIA -->
+  <!-- MODAL DE SENHA DA PROPRIETÁRIA (Para Login, Edição ou Exclusão de Venda) -->
   <div id="modal-owner-login" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
     <div class="surface-card max-w-sm w-full rounded-2xl p-6 border border-[#42325c] space-y-4">
       <div class="flex items-center justify-between">
@@ -428,8 +434,8 @@
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
           </div>
           <div>
-            <h3 class="font-bold text-base text-white">Acesso da Proprietária</h3>
-            <p class="text-[11px] text-slate-400">Controle de estoque, copos, colheres e caixa</p>
+            <h3 id="auth-modal-title" class="font-bold text-base text-white">Autorização da Proprietária</h3>
+            <p id="auth-modal-subtitle" class="text-[11px] text-slate-400">Digite a senha da proprietária para continuar</p>
           </div>
         </div>
         <button id="btn-close-login" class="text-slate-400 hover:text-white p-1">✕</button>
@@ -438,12 +444,12 @@
       <div class="space-y-3 pt-1">
         <div>
           <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Senha / PIN da Proprietária</label>
-          <input type="password" id="input-owner-password" placeholder="Digite sua senha (padrão: 1234)" class="w-full bg-[#121016] border border-[#322945] rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-purple-400" />
-          <span class="text-[10px] text-slate-500 mt-1 block">Senha inicial padrão: <strong class="text-slate-400">1234</strong> (você pode alterar após entrar).</span>
+          <input type="password" id="input-owner-password" placeholder="Digite a senha da proprietária" class="w-full bg-[#121016] border border-[#322945] rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-purple-400" />
+          <span class="text-[10px] text-slate-500 mt-1 block">Apenas a proprietária pode editar vendas, excluir registros ou gerenciar o estoque.</span>
         </div>
 
         <button id="btn-confirm-login" class="w-full py-2.5 rounded-xl bg-[#522785] hover:bg-[#602e9c] text-white font-semibold text-xs transition scale-tap">
-          Entrar no Painel da Proprietária
+          Confirmar Senha
         </button>
       </div>
     </div>
@@ -563,7 +569,7 @@
             </div>
           </div>
 
-          <!-- Linha 2: Auditoria Completa de Materiais (Inicial vs Saídas vs Saldo em Balcão) -->
+          <!-- Linha 2: Auditoria Completa de Materiais -->
           <div class="surface-card-subtle print-surface rounded-xl p-4 space-y-3">
             <div class="flex items-center justify-between">
               <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">1. Auditoria de Materiais (Copos, Isopores, Colheres e Tampas)</h4>
@@ -716,6 +722,7 @@
       isOwnerLoggedIn: false,
       ownerPassword: '1234',
       pendingOwnerAction: null,
+      editingTxId: null,
       currentType: 'VENDA', // 'VENDA' | 'CONSUMO_INTERNO'
       selectedPackaging: PACKAGING_OPTIONS[0],
       selectedPayment: PAYMENT_METHODS[0].label,
@@ -741,13 +748,11 @@
       }, 3200);
     }
 
-    // Mapeia o nome do recipiente para a chave de estoque
     function getPackageKeyByLabel(label) {
       const found = PACKAGING_OPTIONS.find(p => p.label === label);
       return found ? found.id : null;
     }
 
-    // Carregar dados salvos
     function loadAppData() {
       try {
         const savedPw = localStorage.getItem('mont_acai_owner_pw');
@@ -762,54 +767,7 @@
         if (raw) {
           state.transactions = JSON.parse(raw);
         } else {
-          state.transactions = [
-            {
-              id: 'tx-1',
-              timestamp: '14:30',
-              packaging: 'Copo de 500',
-              packageKey: 'copo_500',
-              weight: 520,
-              quantity: 1,
-              spoons: 1,
-              lids: 0,
-              unitPrice: 24.50,
-              total: 24.50,
-              type: 'VENDA',
-              paymentMethod: 'PIX',
-              notes: 'Morango e leite ninho',
-            },
-            {
-              id: 'tx-2',
-              timestamp: '15:10',
-              packaging: 'Copo de 700',
-              packageKey: 'copo_700',
-              weight: 715,
-              quantity: 1,
-              spoons: 2,
-              lids: 1,
-              unitPrice: 32.00,
-              total: 32.00,
-              type: 'VENDA',
-              paymentMethod: 'Crédito',
-              notes: 'Para viagem (2 colheres)',
-            },
-            {
-              id: 'tx-3',
-              timestamp: '15:45',
-              packaging: 'Isopor de 500',
-              packageKey: 'isopor_500',
-              weight: 510,
-              quantity: 1,
-              spoons: 1,
-              lids: 1,
-              unitPrice: 0,
-              total: 0,
-              type: 'CONSUMO_INTERNO',
-              paymentMethod: 'Consumo Equipe',
-              notes: 'Lanche da tarde (Carlos)',
-            }
-          ];
-          saveTransactions();
+          state.transactions = [];
         }
       } catch (e) {
         state.transactions = [];
@@ -832,7 +790,6 @@
       }
     }
 
-    // Calcula auditoria completa de materiais (Inicial, Saídas Venda, Saídas Interno/Perda, Total Saído, Saldo)
     function computeMaterialsUsage() {
       const usage = {};
       MATERIALS_CATALOG.forEach(mat => {
@@ -853,11 +810,9 @@
         const spoons = tx.spoons !== undefined ? Number(tx.spoons) : qty;
         const lids = tx.lids !== undefined ? Number(tx.lids) : 0;
 
-        // Se for baixa avulsa de material específico
         if (tx.extraMaterialKey && usage[tx.extraMaterialKey]) {
           usage[tx.extraMaterialKey].internalOut += qty;
         } else {
-          // Recipiente normal
           const pkgKey = tx.packageKey || getPackageKeyByLabel(tx.packaging);
           if (pkgKey && usage[pkgKey]) {
             if (isVenda) usage[pkgKey].soldOut += qty;
@@ -865,7 +820,6 @@
           }
         }
 
-        // Colheres e tampas
         if (spoons > 0) {
           if (isVenda) usage.colheres.soldOut += spoons;
           else usage.colheres.internalOut += spoons;
@@ -884,7 +838,6 @@
       return usage;
     }
 
-    // Renderiza os cards de estoque no Painel da Proprietária
     function renderOwnerMaterialsPanel() {
       const grid = document.getElementById('materials-stock-grid');
       if (!grid) return;
@@ -1046,7 +999,7 @@
         consumoBtn.className = 'py-2.5 px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-2 text-slate-400 hover:text-slate-200 scale-tap';
         
         valInput.disabled = false;
-        valInput.value = '';
+        if (valInput.value === '0.00') valInput.value = '';
         paymentContainer.style.display = 'block';
         notesLabel.textContent = 'Observação (Opcional)';
         notesInput.placeholder = 'Ex: Morango e leite ninho, sem calda...';
@@ -1065,6 +1018,26 @@
         notesInput.placeholder = 'Ex: Lanche da tarde (João)';
         updateSubtotal();
       };
+    }
+
+    function resetEditMode() {
+      state.editingTxId = null;
+      document.getElementById('form-header-title').innerHTML = `
+        <svg class="w-5 h-5 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Novo Lançamento
+      `;
+      document.getElementById('form-mode-badge').textContent = 'Balança & Materiais';
+      document.getElementById('form-mode-badge').className = 'text-[11px] text-slate-300 font-medium bg-[#251f30] px-2.5 py-1 rounded-md border border-[#342c44]';
+      document.getElementById('btn-submit-text').textContent = 'Confirmar e Dar Baixa nos Materiais';
+      document.getElementById('btn-cancel-edit').classList.add('hidden');
+
+      document.getElementById('input-weight').value = '';
+      if (state.currentType === 'VENDA') document.getElementById('input-val').value = '';
+      document.getElementById('input-qty').value = '1';
+      document.getElementById('input-spoons').value = '1';
+      document.getElementById('input-lids').value = '0';
+      document.getElementById('input-notes').value = '';
+      updateSubtotal();
     }
 
     function handleCreateTransaction() {
@@ -1094,9 +1067,37 @@
       }
 
       const isVenda = state.currentType === 'VENDA';
+      const finalPrice = isVenda ? val : 0;
+
+      // Se estiver editando uma venda existente (após digitar a senha da proprietária)
+      if (state.editingTxId) {
+        const index = state.transactions.findIndex(t => t.id === state.editingTxId);
+        if (index !== -1) {
+          state.transactions[index] = {
+            ...state.transactions[index],
+            packaging: state.selectedPackaging.label,
+            packageKey: state.selectedPackaging.id,
+            weight: weight,
+            quantity: qty,
+            spoons: spoons,
+            lids: lids,
+            unitPrice: finalPrice,
+            total: qty * finalPrice,
+            type: state.currentType,
+            paymentMethod: isVenda ? state.selectedPayment : 'Consumo Equipe',
+            notes: notesInput.value.trim(),
+          };
+          saveTransactions();
+          renderTransactions();
+          calculateMetrics();
+          resetEditMode();
+          showToast('Venda alterada com sucesso pela proprietária!');
+          return;
+        }
+      }
+
       const now = new Date();
       const timeFormatted = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-      const finalPrice = isVenda ? val : 0;
 
       const newTx = {
         id: 'tx-' + Date.now(),
@@ -1119,38 +1120,80 @@
       renderTransactions();
       calculateMetrics();
 
-      // Reset mantendo padrão de 1 colher para agilizar próximo atendimento
-      weightInput.value = '';
-      if (isVenda) valInput.value = '';
-      qtyInput.value = '1';
-      spoonsInput.value = '1';
-      lidsInput.value = '0';
-      notesInput.value = '';
-      updateSubtotal();
+      resetEditMode();
       showToast(isVenda ? 'Venda e saída de materiais registradas!' : 'Consumo interno e materiais registrados!');
     }
 
-    // Exige login da proprietária para ações sensíveis (excluir registro ou zerar turno)
-    function requireOwnerAuth(actionCallback) {
-      if (state.isOwnerLoggedIn) {
-        actionCallback();
-      } else {
-        state.pendingOwnerAction = actionCallback;
-        document.getElementById('input-owner-password').value = '';
-        document.getElementById('modal-owner-login').classList.remove('hidden');
-        document.getElementById('input-owner-password').focus();
-        showToast('Digite a senha da proprietária para continuar.');
-      }
+    // SEMPRE pede a senha da proprietária para ações críticas (Editar venda, Excluir venda ou Zerar Turno)
+    function promptOwnerPasswordAlways(title, subtitle, actionCallback) {
+      state.pendingOwnerAction = actionCallback;
+      document.getElementById('auth-modal-title').textContent = title || 'Senha da Proprietária';
+      document.getElementById('auth-modal-subtitle').textContent = subtitle || 'Digite a senha para autorizar esta operação';
+      document.getElementById('input-owner-password').value = '';
+      document.getElementById('modal-owner-login').classList.remove('hidden');
+      document.getElementById('input-owner-password').focus();
     }
 
+    // Editar venda: Exige digitar a senha da proprietária toda vez
+    window.editTx = function(id) {
+      const tx = state.transactions.find(t => t.id === id);
+      if (!tx) return;
+      if (tx.extraMaterialKey) {
+        showToast('Baixas avulsas de material só podem ser excluídas.');
+        return;
+      }
+
+      promptOwnerPasswordAlways(
+        'Editar Venda / Lançamento',
+        'Somente a proprietária pode editar. Digite a senha:',
+        () => {
+          state.editingTxId = tx.id;
+          const pkg = PACKAGING_OPTIONS.find(p => p.id === tx.packageKey || p.label === tx.packaging) || PACKAGING_OPTIONS[0];
+          state.selectedPackaging = pkg;
+          renderPackagingButtons();
+
+          if (tx.type === 'VENDA') {
+            document.getElementById('type-venda-btn').click();
+            state.selectedPayment = tx.paymentMethod || 'PIX';
+            renderPaymentButtons();
+            document.getElementById('input-val').value = tx.unitPrice;
+          } else {
+            document.getElementById('type-consumo-btn').click();
+          }
+
+          document.getElementById('input-weight').value = tx.weight;
+          document.getElementById('input-qty').value = tx.quantity || 1;
+          document.getElementById('input-spoons').value = tx.spoons !== undefined ? tx.spoons : (tx.quantity || 1);
+          document.getElementById('input-lids').value = tx.lids || 0;
+          document.getElementById('input-notes').value = tx.notes || '';
+
+          document.getElementById('form-header-title').innerHTML = `<span class="text-[#fcd34d]">✏️ Editando Venda (${tx.timestamp})</span>`;
+          document.getElementById('form-mode-badge').textContent = 'Modo Edição';
+          document.getElementById('form-mode-badge').className = 'text-[11px] text-[#fcd34d] font-semibold bg-[#2e2518] px-2.5 py-1 rounded-md border border-[#453722]';
+          document.getElementById('btn-submit-text').textContent = 'Salvar Alterações da Venda';
+          document.getElementById('btn-cancel-edit').classList.remove('hidden');
+
+          updateSubtotal();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          showToast('Modo de edição liberado. Altere os dados ao lado e clique em Salvar.');
+        }
+      );
+    };
+
+    // Excluir venda: Exige digitar a senha da proprietária toda vez
     window.deleteTx = function(id) {
-      requireOwnerAuth(() => {
-        state.transactions = state.transactions.filter(t => t.id !== id);
-        saveTransactions();
-        renderTransactions();
-        calculateMetrics();
-        showToast('Registro excluído pela proprietária.');
-      });
+      promptOwnerPasswordAlways(
+        'Excluir Venda / Lançamento',
+        'Somente a proprietária pode excluir. Digite a senha:',
+        () => {
+          state.transactions = state.transactions.filter(t => t.id !== id);
+          if (state.editingTxId === id) resetEditMode();
+          saveTransactions();
+          renderTransactions();
+          calculateMetrics();
+          showToast('Registro excluído com autorização da proprietária.');
+        }
+      );
     };
 
     function renderTransactions() {
@@ -1182,7 +1225,7 @@
           <div class="py-3 px-2 flex items-center justify-between gap-3 group hover:bg-[#15121c] rounded-xl transition">
             <div class="space-y-1">
               <div class="flex items-center gap-2 flex-wrap">
-                <span class="font-semibold text-sm text-slate-100">${qty > 1 ? `${qty}x ` : ''}${tx.packaging || 'Açaí'}</span>
+                <span class="font-semibold text-sm text-slate-100">${qty > 1 && !tx.extraMaterialKey ? `${qty}x ` : ''}${tx.packaging || 'Açaí'}</span>
                 ${tx.weight ? `
                   <span class="px-2 py-0.5 text-[10px] font-medium rounded-md bg-[#221f2e] text-slate-300 border border-[#312c42]">
                     ${weightFormatted}
@@ -1212,14 +1255,19 @@
               </div>
             </div>
 
-            <div class="flex items-center gap-3">
-              <div class="text-right">
+            <div class="flex items-center gap-1.5">
+              <div class="text-right mr-1.5">
                 <div class="text-sm font-bold ${isVenda ? 'text-[#6ee7b7]' : 'text-slate-400'}">
                   ${isVenda ? `R$ ${formatBRL(tx.total)}` : 'R$ 0,00'}
                 </div>
                 <div class="text-[10px] text-slate-500">${tx.timestamp}</div>
               </div>
-              <button onclick="deleteTx('${tx.id}')" title="Excluir Lançamento (Requer Senha da Proprietária)" class="text-slate-500 hover:text-rose-400 p-1.5 hover:bg-[#241e2e] rounded-lg transition scale-tap">
+              ${!tx.extraMaterialKey ? `
+                <button onclick="editTx('${tx.id}')" title="Editar Venda (Exige Senha da Proprietária)" class="text-slate-400 hover:text-purple-300 p-1.5 hover:bg-[#241e2e] rounded-lg transition scale-tap flex items-center gap-1 border border-transparent hover:border-[#382e4a]">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                </button>
+              ` : ''}
+              <button onclick="deleteTx('${tx.id}')" title="Excluir Venda (Exige Senha da Proprietária)" class="text-slate-400 hover:text-rose-400 p-1.5 hover:bg-[#241e2e] rounded-lg transition scale-tap flex items-center gap-1 border border-transparent hover:border-rose-900/50">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
               </button>
             </div>
@@ -1228,7 +1276,6 @@
       }).join('');
     }
 
-    // Atualiza interface de acordo com o login da Proprietária
     function updateOwnerUI() {
       const panel = document.getElementById('owner-materials-panel');
       const roleBadge = document.getElementById('role-badge');
@@ -1248,7 +1295,6 @@
       }
     }
 
-    // Consolida dados completos para o Relatório de Fechamento
     function buildReportData() {
       const now = new Date();
       const dateStr = now.toLocaleDateString('pt-BR');
@@ -1331,7 +1377,6 @@
       document.getElementById('report-period-subtitle').textContent =
         `Mont' Açaí • Turno das ${data.firstTime} às ${data.lastTime} (${data.totalRecords} lançamentos)`;
 
-      // KPIs
       document.getElementById('rep-kpi-revenue').textContent = `R$ ${formatBRL(data.revenue)}`;
       document.getElementById('rep-kpi-sales-count').textContent = `${data.salesTxCount} vendas (${data.soldUnits} copos/isop.)`;
       document.getElementById('rep-kpi-ticket').textContent = `R$ ${formatBRL(data.avgTicket)}`;
@@ -1341,7 +1386,6 @@
       document.getElementById('rep-kpi-spoons').textContent = `${data.materialsUsage.colheres.totalOut} colheres`;
       document.getElementById('rep-kpi-lids').textContent = `${data.materialsUsage.tampas.totalOut} tampas saídas`;
 
-      // Tabela 1: Auditoria de Materiais (Copos, Isopores, Colheres e Tampas)
       const matRows = Object.values(data.materialsUsage).map(mat => {
         return `
           <tr class="text-slate-200">
@@ -1356,7 +1400,6 @@
       }).join('');
       document.getElementById('rep-table-materials-audit').innerHTML = matRows;
 
-      // Tabela 2: Pagamentos
       const paymentRows = Object.entries(data.payments).map(([method, info]) => {
         const pct = data.revenue > 0 ? ((info.total / data.revenue) * 100).toFixed(1).replace('.', ',') : '0,0';
         return `
@@ -1378,7 +1421,6 @@
         </tr>
       `;
 
-      // Lista 3: Consumo Interno & Baixas Avulsas
       document.getElementById('rep-internal-summary-badge').textContent =
         `${data.internalItems.length} ocorrências`;
 
@@ -1406,7 +1448,6 @@
         }).join('');
       }
 
-      // Geração do Texto Formatado para WhatsApp da Proprietária
       let txt = `====================================\n`;
       txt += `🍧 *FECHAMENTO & ESTOQUE - MONT' AÇAÍ*\n`;
       txt += `====================================\n`;
@@ -1449,7 +1490,6 @@
       document.getElementById('report-text-area').value = txt;
     }
 
-    // Exportar para CSV (Excel)
     function exportTransactionsCSV() {
       if (state.transactions.length === 0) {
         showToast('Não há registros para exportar.');
@@ -1590,7 +1630,7 @@
       document.getElementById('qty-plus').onclick = () => {
         const nextQty = (parseInt(qtyInput.value, 10) || 1) + 1;
         qtyInput.value = nextQty;
-        spoonsInput.value = nextQty; // Sugere 1 colher por copo automaticamente
+        spoonsInput.value = nextQty;
         updateSubtotal();
       };
       document.getElementById('qty-minus').onclick = () => {
@@ -1621,6 +1661,7 @@
 
       document.getElementById('input-val').oninput = updateSubtotal;
       document.getElementById('btn-submit-tx').onclick = handleCreateTransaction;
+      document.getElementById('btn-cancel-edit').onclick = resetEditMode;
 
       // Filtros
       document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -1634,7 +1675,7 @@
         };
       });
 
-      // Login da Proprietária
+      // Login e Autorização da Proprietária
       const loginModal = document.getElementById('modal-owner-login');
       const pwInput = document.getElementById('input-owner-password');
 
@@ -1643,10 +1684,15 @@
           const panel = document.getElementById('owner-materials-panel');
           panel.scrollIntoView({ behavior: 'smooth' });
         } else {
-          state.pendingOwnerAction = null;
-          pwInput.value = '';
-          loginModal.classList.remove('hidden');
-          pwInput.focus();
+          promptOwnerPasswordAlways(
+            'Acesso da Proprietária',
+            'Controle de estoque, copos, colheres e caixa',
+            () => {
+              state.isOwnerLoggedIn = true;
+              updateOwnerUI();
+              showToast('Bem-vinda! Painel da Proprietária liberado.');
+            }
+          );
         }
       };
 
@@ -1657,18 +1703,18 @@
 
       function handleConfirmLogin() {
         if (pwInput.value === state.ownerPassword) {
-          state.isOwnerLoggedIn = true;
           loginModal.classList.add('hidden');
-          updateOwnerUI();
           if (state.pendingOwnerAction) {
             const fn = state.pendingOwnerAction;
             state.pendingOwnerAction = null;
             fn();
           } else {
+            state.isOwnerLoggedIn = true;
+            updateOwnerUI();
             showToast('Bem-vinda! Painel da Proprietária liberado.');
           }
         } else {
-          showToast('Senha incorreta! Tente novamente.');
+          showToast('Senha incorreta! Apenas a proprietária pode realizar esta ação.');
           pwInput.select();
         }
       }
@@ -1730,7 +1776,6 @@
           notes: `${qty}x ${matObj ? matObj.label : ''} (${reason})`,
         };
 
-        // Se for recipiente avulso, quantity guarda a qtd
         if (matKey !== 'colheres' && matKey !== 'tampas') {
           lossTx.quantity = qty;
         }
@@ -1765,18 +1810,21 @@
         showToast('Senha da proprietária alterada com sucesso!');
       };
 
-      // Modal de Zerar Turno (Protegido pela senha da proprietária)
+      // Modal de Zerar Turno (SEMPRE pede senha da proprietária)
       const clearModal = document.getElementById('modal-clear-shift');
       document.getElementById('btn-open-clear-modal').onclick = () => {
-        requireOwnerAuth(() => {
-          clearModal.classList.remove('hidden');
-        });
+        promptOwnerPasswordAlways(
+          'Zerar Turno e Fechar Caixa',
+          'Somente a proprietária pode zerar o turno. Digite a senha:',
+          () => {
+            clearModal.classList.remove('hidden');
+          }
+        );
       };
       document.getElementById('btn-cancel-modal').onclick = () => {
         clearModal.classList.add('hidden');
       };
       document.getElementById('btn-confirm-clear').onclick = () => {
-        // Atualiza o estoque inicial do próximo turno com o saldo restante atual
         const currentUsage = computeMaterialsUsage();
         Object.values(currentUsage).forEach(item => {
           state.initialStock[item.key] = item.remaining;
@@ -1784,6 +1832,7 @@
         saveStock();
 
         state.transactions = [];
+        resetEditMode();
         saveTransactions();
         renderTransactions();
         calculateMetrics();
