@@ -1,0 +1,86 @@
+/* ==========================================================================
+   Mont' Açaí - Estilos Customizados & Paleta Sóbria (Matte Dark Plum / Slate)
+   ========================================================================== */
+
+* {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  background-color: #121016;
+  min-height: 100vh;
+  color: #e2e8f0;
+}
+
+/* Scrollbar discreta */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #16131c;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #332c42;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #483e5c;
+}
+
+/* Superfícies de cards sóbrias (sem efeito neon) */
+.surface-card {
+  background: #1a1721;
+  border: 1px solid #2a2436;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.surface-card-subtle {
+  background: #15121b;
+  border: 1px solid #252030;
+}
+
+/* Animações suaves de interação */
+.scale-tap {
+  transition: transform 0.1s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.scale-tap:active {
+  transform: scale(0.98);
+}
+
+/* Configuração de impressão limpa para o relatório de fechamento */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #modal-report,
+  #modal-report * {
+    visibility: visible;
+  }
+
+  #modal-report {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-surface {
+    background: #ffffff !important;
+    color: #111827 !important;
+    border-color: #d1d5db !important;
+    box-shadow: none !important;
+  }
+}
