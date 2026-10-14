@@ -27,23 +27,21 @@ O projeto foi estruturado utilizando tecnologias web modernas, leves e sem depen
 
 ## ✨ Principais Funcionalidades
 
-### 🛒 1. Operação de Balcão (PDV & Balança)
+### 🛒 1. Operação de Balcão (Tela Principal Limpa & Foco no Atendimento)
+- **Tela Principal Simplificada:** Mantém na tela inicial apenas o **Formulário de Novos Lançamentos** e a **Conferência do Último Lançamento Realizado** (para conferência imediata do peso, valor e insumos do atendimento recém-concluído).
 - **Registro de Vendas e Consumo Interno:** Alternância rápida entre vendas para clientes e consumo da equipe (que dá baixa no estoque e no peso sem distorcer o faturamento em R$).
 - **Seleção de Recipientes:** `Copo de 500ml`, `Copo de 700ml` e `Isopor de 500ml Térmico`.
-- **Aferição de Peso (Gramas):** Registro do peso exato da balança com soma automática em quilogramas (`kg`) e gramas (`g`).
-- **Baixa Automática de Insumos por Pedido:** Controle individual da quantidade de **copos/isopores**, **colheres descartáveis** e **tampas** entregues em cada atendimento.
+- **Aferição de Peso (Gramas):** Registro do peso exato da balança com cálculo automático.
+- **Baixa Automática de Insumos por Pedido:** Quantidade de **copos/isopores**, **colheres descartáveis** e **tampas** entregues ao cliente.
 - **Meios de Pagamento:** Classificação por `PIX`, `Débito`, `Crédito` e `Dinheiro`.
 
 ### 🔒 2. Área Exclusiva da Proprietária (Protegida por Senha)
-- **Controle de Estoque em Tempo Real:** Acompanhamento da quantidade inicial, total que saiu no dia (em vendas e consumo interno) e **saldo restante no balcão** para:
-  - Copos de 500ml
-  - Copos de 700ml
-  - Isopores de 500ml
-  - Colheres Descartáveis
-  - Tampas
-- **Alerta de Reposição:** Indicador automático quando o saldo de qualquer material fica abaixo do limite de segurança.
-- **Baixa Avulsa / Perda:** Registro rápido para materiais avariados (ex.: copo amassado) ou saídas avulsas.
-- **Proteção por Senha em Ações Críticas:** Somente a proprietária (mediante digitação de senha) pode **editar uma venda**, **excluir um lançamento** ou **zerar o turno**.
+- **Painel Gerencial Completo:** Todas as informações estratégicas e confidenciais ficam guardadas dentro do acesso da proprietária:
+  - **Faturamento e Indicadores Financeiros:** Receita bruta do dia, ticket médio por atendimento e peso total comercializado.
+  - **Controle de Estoque em Tempo Real:** Quantidade inicial, saídas em vendas, saídas em consumo/perda e saldo restante de copos (500ml e 700ml), isopores (500ml), colheres e tampas.
+  - **Histórico Completo de Lançamentos:** Listagem detalhada com filtros e opções protegidas para editar valores ou excluir registros.
+  - **Ações Gerenciais:** Abastecer/ajustar estoque inicial, registrar perdas avulsas, gerar relatórios de fechamento e fechar o caixa do dia.
+  - **Proteção Total por Senha:** Exige a senha da proprietária para desbloquear o painel gerencial, editar vendas, alterar estoque ou reabrir caixas fechados.
 
 ### 📊 3. Relatório de Fechamento de Caixa & Auditoria
 - **Painel Visual Detalhado:** Indicadores de Receita Bruta, Ticket Médio, Preço Médio por Kg (`R$/kg`), tabela financeira por forma de pagamento e tabela de auditoria física de materiais.

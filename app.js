@@ -114,7 +114,7 @@ function loadAppData() {
     const raw = localStorage.getItem('acai_flow_v3');
     if (raw) {
       state.transactions = JSON.parse(raw);
-      // Garantir compatibilidade com registros antigos adicionando o campo date
+      // Compatibilidade retroativa garantindo campo date
       state.transactions.forEach(tx => {
         if (!tx.date) tx.date = getTodayLocalDate();
       });
@@ -162,6 +162,11 @@ function checkDateStatus(dateStr) {
   const inputVal = document.getElementById('input-val');
   const inputNotes = document.getElementById('input-notes');
   const modalDateLabel = document.getElementById('modal-close-date-label');
+  const topActiveDate = document.getElementById('top-active-date');
+
+  if (topActiveDate) {
+    topActiveDate.textContent = formatDisplayDate(dateStr);
+  }
 
   if (modalDateLabel) {
     modalDateLabel.textContent = formatDisplayDate(dateStr);
@@ -200,7 +205,95 @@ function checkDateStatus(dateStr) {
   }
 }
 
-// Retorna as transações filtradas pela data de visualização
+// Renderiza o card "Último Lançamento Realizado" na tela principal
+function renderLastTransaction() {
+  const contentEl = document.getElementById('last-tx-content');
+  const emptyEl = document.getElementById('last-tx-empty');
+  const badgeEl = document.getElementById('last-tx-badge');
+  if (!contentEl || !emptyEl) return;
+
+  const lastTx = state.transactions.length > 0 ? state.transactions[0] : null;
+
+  if (!lastTx) {
+    contentEl.classList.add('hidden');
+    emptyEl.classList.remove('hidden');
+    if (badgeEl) {
+      badgeEl.className = 'px-2.5 py-0.5 text-[10px] font-semibold rounded bg-[#1f1b29] text-slate-400 border border-[#2f283d]';
+      badgeEl.textContent = 'Aguardando';
+    }
+    return;
+  }
+
+  emptyEl.classList.add('hidden');
+  contentEl.classList.remove('hidden');
+
+  const isVenda = lastTx.type === 'VENDA';
+  const qty = Number(lastTx.quantity) || 1;
+  const spoons = lastTx.spoons !== undefined ? Number(lastTx.spoons) : qty;
+  const lids = lastTx.lids !== undefined ? Number(lastTx.lids) : 0;
+  const totalWeight = (Number(lastTx.weight) || 0) * qty;
+
+  const amountEl = document.getElementById('last-tx-amount');
+  const typeBadgeEl = document.getElementById('last-tx-type-badge');
+  const timeEl = document.getElementById('last-tx-time');
+  const pkgEl = document.getElementById('last-tx-pkg');
+  const weightEl = document.getElementById('last-tx-weight');
+  const paymentEl = document.getElementById('last-tx-payment');
+  const dateEl = document.getElementById('last-tx-date');
+  const spoonsEl = document.getElementById('last-tx-spoons');
+  const lidsEl = document.getElementById('last-tx-lids');
+  const qtyEl = document.getElementById('last-tx-qty');
+  const notesContainer = document.getElementById('last-tx-notes-container');
+  const notesEl = document.getElementById('last-tx-notes');
+
+  if (amountEl) {
+    if (isVenda) {
+      amountEl.textContent = `R$ ${formatBRL(lastTx.total)}`;
+      amountEl.className = 'text-2xl font-black text-[#6ee7b7] block mt-0.5';
+    } else {
+      amountEl.textContent = 'Consumo Interno';
+      amountEl.className = 'text-xl font-bold text-[#fcd34d] block mt-0.5';
+    }
+  }
+
+  if (typeBadgeEl) {
+    if (isVenda) {
+      typeBadgeEl.textContent = 'Venda Cliente';
+      typeBadgeEl.className = 'inline-block px-2.5 py-1 text-[11px] font-bold rounded-lg bg-[#1e2e28] text-[#6ee7b7] border border-[#2b473d]';
+    } else {
+      typeBadgeEl.textContent = 'Consumo Equipe';
+      typeBadgeEl.className = 'inline-block px-2.5 py-1 text-[11px] font-bold rounded-lg bg-[#2e2518] text-[#fcd34d] border border-[#453722]';
+    }
+  }
+
+  if (timeEl) timeEl.textContent = lastTx.timestamp || '--:--';
+  if (pkgEl) pkgEl.textContent = `${qty > 1 && !lastTx.extraMaterialKey ? `${qty}x ` : ''}${lastTx.packaging || 'Açaí'}`;
+  if (weightEl) {
+    weightEl.textContent = lastTx.weight ? `${qty > 1 ? `${qty}x ${lastTx.weight}g (${totalWeight}g)` : `${lastTx.weight}g`}` : 'Baixa de Material';
+  }
+  if (paymentEl) paymentEl.textContent = lastTx.paymentMethod || 'Dinheiro';
+  if (dateEl) dateEl.textContent = formatDisplayDate(lastTx.date || getTodayLocalDate());
+
+  if (spoonsEl) spoonsEl.textContent = `${spoons} colher${spoons > 1 ? 'es' : ''}`;
+  if (lidsEl) lidsEl.textContent = `${lids} tampa${lids > 1 ? 's' : ''}`;
+  if (qtyEl) qtyEl.textContent = `${qty}x recipiente${qty > 1 ? 's' : ''}`;
+
+  if (notesContainer && notesEl) {
+    if (lastTx.notes && lastTx.notes.trim()) {
+      notesEl.textContent = `"${lastTx.notes.trim()}"`;
+      notesContainer.classList.remove('hidden');
+    } else {
+      notesContainer.classList.add('hidden');
+    }
+  }
+
+  if (badgeEl) {
+    badgeEl.className = 'px-2.5 py-0.5 text-[10px] font-semibold rounded bg-[#1e2823] text-[#6ee7b7] border border-[#2b4237]';
+    badgeEl.textContent = `● Registrado às ${lastTx.timestamp}`;
+  }
+}
+
+// Retorna as transações filtradas pela data de visualização no histórico gerencial
 function getTransactionsForCurrentView() {
   if (state.viewFilterDate === 'TODOS') {
     return state.transactions;
@@ -318,15 +411,25 @@ function calculateMetrics() {
   const totalCupsOut = usage.copo_500.totalOut + usage.copo_700.totalOut + usage.isopor_500.totalOut;
   const avgTicket = salesCount > 0 ? (revenue / salesCount) : 0;
 
-  document.getElementById('metric-revenue').textContent = `R$ ${formatBRL(revenue)}`;
-  document.getElementById('metric-avg-ticket').textContent = `Ticket médio: R$ ${formatBRL(avgTicket)}`;
-  document.getElementById('metric-sold-units').textContent = `${totalCupsOut} un`;
-  document.getElementById('metric-cups-breakdown').textContent = `${soldUnits} vendas • ${totalCupsOut - soldUnits} interno`;
-  document.getElementById('metric-total-weight').textContent = `${formatKg(totalWeightSold)} kg`;
-  document.getElementById('metric-weight-grams').textContent = `${totalWeightSold.toLocaleString('pt-BR')}g pesados`;
-  document.getElementById('metric-spoons-out').textContent = `${usage.colheres.totalOut} colheres`;
-  document.getElementById('metric-lids-out').textContent = `${usage.tampas.totalOut} tampas utilizadas`;
-  document.getElementById('tx-counter-text').textContent = `${txList.length} registros gravados`;
+  const revEl = document.getElementById('metric-revenue');
+  const avgEl = document.getElementById('metric-avg-ticket');
+  const unitsEl = document.getElementById('metric-sold-units');
+  const cupsBreakdownEl = document.getElementById('metric-cups-breakdown');
+  const weightEl = document.getElementById('metric-total-weight');
+  const gramsEl = document.getElementById('metric-weight-grams');
+  const spoonsEl = document.getElementById('metric-spoons-out');
+  const lidsEl = document.getElementById('metric-lids-out');
+  const countEl = document.getElementById('tx-counter-text');
+
+  if (revEl) revEl.textContent = `R$ ${formatBRL(revenue)}`;
+  if (avgEl) avgEl.textContent = `Ticket médio: R$ ${formatBRL(avgTicket)}`;
+  if (unitsEl) unitsEl.textContent = `${totalCupsOut} un`;
+  if (cupsBreakdownEl) cupsBreakdownEl.textContent = `${soldUnits} vendas • ${totalCupsOut - soldUnits} interno`;
+  if (weightEl) weightEl.textContent = `${formatKg(totalWeightSold)} kg`;
+  if (gramsEl) gramsEl.textContent = `${totalWeightSold.toLocaleString('pt-BR')}g pesados`;
+  if (spoonsEl) spoonsEl.textContent = `${usage.colheres.totalOut} colheres`;
+  if (lidsEl) lidsEl.textContent = `${usage.tampas.totalOut} tampas utilizadas`;
+  if (countEl) countEl.textContent = `${txList.length} registros gravados`;
 
   renderOwnerMaterialsPanel();
 }
@@ -449,7 +552,7 @@ function resetEditMode() {
     <svg class="w-5 h-5 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
     Novo Lançamento
   `;
-  document.getElementById('form-mode-badge').textContent = 'Balança & Materiais';
+  document.getElementById('form-mode-badge').textContent = 'Balança & Balcão';
   document.getElementById('form-mode-badge').className = 'text-[11px] text-slate-300 font-medium bg-[#251f30] px-2.5 py-1 rounded-md border border-[#342c44]';
   document.getElementById('btn-submit-text').textContent = 'Confirmar e Dar Baixa nos Materiais';
   document.getElementById('btn-cancel-edit').classList.add('hidden');
@@ -519,6 +622,7 @@ function handleCreateTransaction() {
       saveTransactions();
       renderTransactions();
       calculateMetrics();
+      renderLastTransaction();
       resetEditMode();
       showToast('Venda alterada com sucesso pela proprietária!');
       return;
@@ -548,7 +652,7 @@ function handleCreateTransaction() {
   state.transactions.unshift(newTx);
   saveTransactions();
 
-  // Se a visualização estiver em outro dia, atualiza para o dia do lançamento para visualizá-lo
+  // Sincroniza visualização do dia para o dia do lançamento se estiver em outra data
   if (state.viewFilterDate !== 'TODOS' && state.viewFilterDate !== state.selectedDate) {
     state.viewFilterDate = state.selectedDate;
     const filterInput = document.getElementById('filter-view-date');
@@ -558,6 +662,7 @@ function handleCreateTransaction() {
 
   renderTransactions();
   calculateMetrics();
+  renderLastTransaction();
 
   resetEditMode();
   showToast(isVenda ? 'Venda e saída de materiais registradas!' : 'Consumo interno e materiais registrados!');
@@ -649,6 +754,7 @@ window.deleteTx = function(id) {
       saveTransactions();
       renderTransactions();
       calculateMetrics();
+      renderLastTransaction();
       showToast('Registro excluído com autorização da proprietária.');
     }
   );
@@ -665,8 +771,8 @@ function renderTransactions() {
 
   if (filtered.length === 0) {
     listContainer.innerHTML = `
-      <div class="py-14 text-center text-slate-500">
-        <svg class="w-10 h-10 mx-auto text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+      <div class="py-12 text-center text-slate-500">
+        <svg class="w-9 h-9 mx-auto text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
         <p class="text-xs">Nenhum lançamento encontrado para a data/filtro selecionado.</p>
       </div>
     `;
@@ -683,7 +789,7 @@ function renderTransactions() {
     const txDateFormatted = formatDisplayDate(tx.date || getTodayLocalDate());
 
     return `
-      <div class="py-3 px-2 flex items-center justify-between gap-3 group hover:bg-[#15121c] rounded-xl transition">
+      <div class="py-2.5 px-2 flex items-center justify-between gap-3 group hover:bg-[#1a1524] rounded-xl transition">
         <div class="space-y-1">
           <div class="flex items-center gap-2 flex-wrap">
             <span class="font-semibold text-sm text-slate-100">${qty > 1 && !tx.extraMaterialKey ? `${qty}x ` : ''}${tx.packaging || 'Açaí'}</span>
@@ -745,16 +851,23 @@ function updateOwnerUI() {
   const btnLabel = document.getElementById('btn-owner-label');
 
   if (state.isOwnerLoggedIn) {
-    panel.classList.remove('hidden');
-    roleBadge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-[#35234d] text-purple-200 border border-[#4c346e]';
-    roleBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-purple-300 mr-1.5"></span>Modo Proprietária Ativo`;
-    btnLabel.textContent = 'Painel da Proprietária (Ativo)';
+    if (panel) panel.classList.remove('hidden');
+    if (roleBadge) {
+      roleBadge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-[#35234d] text-purple-200 border border-[#4c346e]';
+      roleBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-purple-300 mr-1.5"></span>Modo Proprietária Ativo`;
+    }
+    if (btnLabel) btnLabel.textContent = 'Painel da Proprietária (Ativo)';
     renderOwnerMaterialsPanel();
+    calculateMetrics();
+    renderTransactions();
+    if (panel) panel.scrollIntoView({ behavior: 'smooth' });
   } else {
-    panel.classList.add('hidden');
-    roleBadge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-[#232f29] text-[#6ee7b7] border border-[#2f4239]';
-    roleBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-[#34d399] mr-1.5"></span>Modo Balcão (PDV)`;
-    btnLabel.textContent = 'Login Proprietária';
+    if (panel) panel.classList.add('hidden');
+    if (roleBadge) {
+      roleBadge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-[#232f29] text-[#6ee7b7] border border-[#2f4239]';
+      roleBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-[#34d399] mr-1.5"></span>Modo Balcão (PDV)`;
+    }
+    if (btnLabel) btnLabel.textContent = 'Login Proprietária';
   }
 }
 
@@ -1118,13 +1231,22 @@ window.onload = function() {
           checkDateStatus(state.selectedDate);
           calculateMetrics();
           renderTransactions();
+          renderLastTransaction();
           showToast(`Caixa de ${formatDisplayDate(state.selectedDate)} reaberto com sucesso!`);
         }
       );
     };
   }
 
-  // Filtros de Data do Histórico
+  // Atalho rápido de acesso à proprietária na tela principal
+  const quickOwnerBtn = document.getElementById('btn-quick-owner-login');
+  if (quickOwnerBtn) {
+    quickOwnerBtn.onclick = () => {
+      document.getElementById('btn-owner-access').click();
+    };
+  }
+
+  // Filtros de Data do Histórico (Dentro do Painel da Proprietária)
   const filterDateInput = document.getElementById('filter-view-date');
   if (filterDateInput) {
     filterDateInput.value = state.viewFilterDate;
@@ -1164,6 +1286,7 @@ window.onload = function() {
   checkDateStatus(state.selectedDate);
   calculateMetrics();
   renderTransactions();
+  renderLastTransaction();
   updateFilterBadge();
 
   const qtyInput = document.getElementById('input-qty');
@@ -1223,7 +1346,7 @@ window.onload = function() {
   document.getElementById('btn-owner-access').onclick = () => {
     if (state.isOwnerLoggedIn) {
       const panel = document.getElementById('owner-materials-panel');
-      panel.scrollIntoView({ behavior: 'smooth' });
+      if (panel) panel.scrollIntoView({ behavior: 'smooth' });
     } else {
       promptOwnerPasswordAlways(
         'Acesso da Proprietária',
@@ -1324,6 +1447,7 @@ window.onload = function() {
     saveTransactions();
     renderTransactions();
     calculateMetrics();
+    renderLastTransaction();
     document.getElementById('extra-loss-qty').value = '1';
     document.getElementById('extra-loss-reason').value = '';
     showToast('Baixa avulsa de material registrada!');
@@ -1388,6 +1512,7 @@ window.onload = function() {
     checkDateStatus(state.selectedDate);
     calculateMetrics();
     renderTransactions();
+    renderLastTransaction();
     clearModal.classList.add('hidden');
     showToast(`Caixa de ${formatDisplayDate(targetDate)} fechado com sucesso!`);
   };

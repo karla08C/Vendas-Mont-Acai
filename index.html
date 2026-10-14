@@ -17,7 +17,7 @@
   <div class="max-w-6xl mx-auto space-y-6">
 
     <!-- Top Bar -->
-    <header class="surface-card rounded-2xl p-4 sm:p-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+    <header class="surface-card rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
       <div class="flex items-center gap-3.5">
         <div class="relative group">
           <input type="file" id="logo-input" accept="image/*" class="hidden" />
@@ -43,155 +43,210 @@
               Modo Balcão (PDV)
             </span>
             <span id="top-cash-status" class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#1a1624] text-purple-200 border border-[#342a45]">
-              📅 Caixa do Dia: <strong id="top-active-date" class="ml-1 text-white">--/--/----</strong>
+              📅 Caixa: <strong id="top-active-date" class="ml-1 text-white">--/--/----</strong>
             </span>
           </div>
           <div class="flex items-center gap-2 mt-0.5">
-            <p class="text-xs text-slate-400">Controle de pesagem, saída de copos/colheres e fechamento por data</p>
+            <p class="text-xs text-slate-400">Controle de pesagem e lançamento de pedidos</p>
             <span class="text-slate-600 hidden sm:inline">•</span>
             <button id="btn-trigger-upload" class="text-[11px] text-purple-300 hover:text-purple-200 font-medium underline transition">Alterar Logo</button>
           </div>
         </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2 self-stretch lg:self-auto">
-        <!-- Botão de Login / Painel da Proprietária -->
-        <button id="btn-owner-access" class="flex-1 sm:flex-none px-3.5 py-2.5 rounded-xl bg-[#2a1f3d] hover:bg-[#36284f] text-purple-200 border border-[#463466] text-xs font-semibold flex items-center justify-center gap-2 transition scale-tap">
+      <div class="flex items-center gap-2 self-stretch sm:self-auto">
+        <!-- Botão de Login / Alternar Modo da Proprietária -->
+        <button id="btn-owner-access" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#2a1f3d] hover:bg-[#36284f] text-purple-200 border border-[#463466] text-xs font-semibold flex items-center justify-center gap-2 transition scale-tap">
           <svg class="w-4 h-4 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
           <span id="btn-owner-label">Login Proprietária</span>
-        </button>
-
-        <button id="btn-export-report" class="flex-1 sm:flex-none px-3.5 py-2.5 rounded-xl bg-[#221e2b] hover:bg-[#2c2738] text-slate-200 border border-[#342e42] text-xs font-semibold flex items-center justify-center gap-2 transition scale-tap">
-          <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          Relatório Fechamento
-        </button>
-
-        <button id="btn-open-clear-modal" class="px-3.5 py-2.5 rounded-xl bg-[#1f1a24] hover:bg-[#2c1d24] text-rose-300/90 hover:text-rose-200 border border-[#2e2636] hover:border-rose-900/60 text-xs font-semibold flex items-center justify-center gap-1.5 transition scale-tap" title="Fechar o caixa da data ativa">
-          <svg class="w-4 h-4 text-rose-400/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-          <span id="btn-close-box-label">Fechar Caixa do Dia</span>
         </button>
       </div>
     </header>
 
-    <!-- PAINEL EXCLUSIVO DA PROPRIETÁRIA: Controle de Materiais (Copos, Isopores, Colheres e Tampas) -->
-    <section id="owner-materials-panel" class="hidden surface-card rounded-2xl p-5 sm:p-6 border border-[#4a356b] space-y-5">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#2c2538] pb-4">
+    <!-- PAINEL EXCLUSIVO DA PROPRIETÁRIA (Apenas visível após login com senha) -->
+    <!-- Contém: Faturamento, Indicadores, Controle de Materiais, Histórico Completo, Fechamento de Caixa e Relatórios -->
+    <section id="owner-materials-panel" class="hidden surface-card rounded-2xl p-5 sm:p-6 border border-[#4a356b] space-y-6">
+      
+      <!-- Topo do Painel da Proprietária com Ações Gerenciais -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#2c2538] pb-4">
         <div class="flex items-start sm:items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-[#2d1f42] text-purple-200 flex items-center justify-center border border-[#483269] shrink-0">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h2 class="text-base sm:text-lg font-bold text-white">Painel da Proprietária • Controle de Materiais & Insumos</h2>
+              <h2 class="text-base sm:text-lg font-bold text-white">Painel da Proprietária • Gestão Completa</h2>
               <span class="px-2 py-0.5 text-[10px] font-semibold rounded bg-[#35234d] text-purple-200 border border-[#4c346e]">Acesso Gerencial</span>
             </div>
-            <p class="text-xs text-slate-400">Acompanhe quantos copos, isopores, colheres e tampas saíram hoje e o saldo restante no balcão</p>
+            <p class="text-xs text-slate-400">Faturamento, estoque de insumos, auditoria e fechamento protegidos por senha</p>
           </div>
         </div>
 
+        <!-- Barra de Botões Gerenciais da Proprietária -->
         <div class="flex flex-wrap items-center gap-2">
-          <button id="btn-open-stock-modal" class="px-3.5 py-2 rounded-xl bg-[#272036] hover:bg-[#322945] text-purple-200 border border-[#3f3357] text-xs font-semibold flex items-center gap-1.5 transition scale-tap">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-            Abastecer / Ajustar Estoque Inicial
+          <button id="btn-export-report" class="px-3.5 py-2 rounded-xl bg-[#221e2b] hover:bg-[#2c2738] text-slate-200 border border-[#342e42] text-xs font-semibold flex items-center gap-1.5 transition scale-tap">
+            <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Relatório de Fechamento
           </button>
+
+          <button id="btn-open-clear-modal" class="px-3.5 py-2 rounded-xl bg-[#261922] hover:bg-[#331e2c] text-rose-300 border border-[#422535] text-xs font-semibold flex items-center gap-1.5 transition scale-tap" title="Fechar o caixa da data ativa">
+            <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            <span id="btn-close-box-label">Fechar Caixa do Dia</span>
+          </button>
+
+          <button id="btn-open-stock-modal" class="px-3 py-2 rounded-xl bg-[#272036] hover:bg-[#322945] text-purple-200 border border-[#3f3357] text-xs font-semibold flex items-center gap-1.5 transition scale-tap">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+            Ajustar Estoque
+          </button>
+
           <button id="btn-open-password-modal" class="px-3 py-2 rounded-xl bg-[#1c1824] hover:bg-[#262130] text-slate-300 border border-[#2e283b] text-xs font-medium transition scale-tap">
             Alterar Senha
           </button>
+
           <button id="btn-owner-logout" class="px-3 py-2 rounded-xl bg-[#2b1c22] hover:bg-[#3b242c] text-rose-300 border border-[#452933] text-xs font-semibold transition scale-tap">
             Sair do Modo Proprietária
           </button>
         </div>
       </div>
 
-      <!-- Cards de Estoque de Materiais (Copos 500, Copos 700, Isopor 500, Colheres, Tampas) -->
-      <div id="materials-stock-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-        <!-- Gerado dinamicamente via JS -->
+      <!-- SEÇÃO 1: INDICADORES FINANCEIROS E DE PESAGEM (Visíveis apenas à proprietária) -->
+      <div class="space-y-2">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-purple-300">1. Indicadores do Dia (Confidencial)</span>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <!-- Faturamento Bruto -->
+          <div class="surface-card-subtle p-4 rounded-xl flex items-center justify-between border border-[#2c2338]">
+            <div>
+              <span class="text-[11px] uppercase font-semibold tracking-wider text-slate-400 block">Faturamento (<span class="metric-date-label">Hoje</span>)</span>
+              <h2 id="metric-revenue" class="text-xl sm:text-2xl font-bold text-[#6ee7b7] mt-0.5">R$ 0,00</h2>
+              <span id="metric-avg-ticket" class="text-[11px] text-slate-500 block mt-0.5">Ticket médio: R$ 0,00</span>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-[#1f2d27] text-[#6ee7b7] flex items-center justify-center border border-[#2c4037] shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+          </div>
+
+          <!-- Peso Total Comercializado -->
+          <div class="surface-card-subtle p-4 rounded-xl flex items-center justify-between border border-[#2c2338]">
+            <div>
+              <span class="text-[11px] uppercase font-semibold tracking-wider text-slate-400 block">Peso Vendido</span>
+              <h2 id="metric-total-weight" class="text-xl sm:text-2xl font-bold text-slate-100 mt-0.5">0,000 kg</h2>
+              <span id="metric-weight-grams" class="text-[11px] text-slate-500 block mt-0.5">0g na balança</span>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-[#232230] text-slate-300 flex items-center justify-center border border-[#323045] shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+            </div>
+          </div>
+
+          <!-- Saída de Copos & Isopores -->
+          <div class="surface-card-subtle p-4 rounded-xl flex items-center justify-between border border-[#2c2338]">
+            <div>
+              <span class="text-[11px] uppercase font-semibold tracking-wider text-slate-400 block">Copos / Isopores</span>
+              <h2 id="metric-sold-units" class="text-xl sm:text-2xl font-bold text-purple-200 mt-0.5">0 un</h2>
+              <span id="metric-cups-breakdown" class="text-[11px] text-slate-500 block mt-0.5">0 vendas • 0 interno</span>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-[#292038] text-purple-300 flex items-center justify-center border border-[#3b2d52] shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+            </div>
+          </div>
+
+          <!-- Saída de Colheres & Tampas -->
+          <div class="surface-card-subtle p-4 rounded-xl flex items-center justify-between border border-[#2c2338]">
+            <div>
+              <span class="text-[11px] uppercase font-semibold tracking-wider text-slate-400 block">Colheres & Tampas</span>
+              <h2 id="metric-spoons-out" class="text-xl sm:text-2xl font-bold text-[#fcd34d] mt-0.5">0 colheres</h2>
+              <span id="metric-lids-out" class="text-[11px] text-slate-500 block mt-0.5">0 tampas utilizadas</span>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-[#2e261b] text-[#fcd34d] flex items-center justify-center border border-[#423625] shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Registro Rápido de Baixa Avulsa / Perda de Material -->
-      <div class="surface-card-subtle rounded-xl p-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div>
-          <span class="text-xs font-semibold text-slate-200 block">Baixa Avulsa ou Perda de Material</span>
-          <span class="text-[11px] text-slate-400">Registre caso algum copo/colher tenha estragado ou saído avulso fora de uma venda:</span>
+      <!-- SEÇÃO 2: CONTROLE DE ESTOQUE DE MATERIAIS & INSUMOS -->
+      <div class="space-y-3 pt-2 border-t border-[#2c2538]">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-purple-300">2. Auditoria de Estoque no Balcão</span>
+          <span class="text-[11px] text-slate-400">Saldo atualizado a cada lançamento</span>
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-          <select id="extra-loss-item" class="bg-[#121016] border border-[#2c2538] rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none">
-            <option value="colheres">Colheres Descartáveis</option>
-            <option value="tampas">Tampas</option>
-            <option value="copo_500">Copo de 500</option>
-            <option value="copo_700">Copo de 700</option>
-            <option value="isopor_500">Isopor de 500</option>
-          </select>
-          <input type="number" id="extra-loss-qty" min="1" value="1" class="w-16 bg-[#121016] border border-[#2c2538] rounded-lg px-2.5 py-1.5 text-xs text-center font-bold text-white focus:outline-none" />
-          <input type="text" id="extra-loss-reason" placeholder="Motivo (ex: Copo amassou)" class="bg-[#121016] border border-[#2c2538] rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none" />
-          <button id="btn-register-loss" class="px-3 py-1.5 rounded-lg bg-[#522785] hover:bg-[#602e9c] text-white text-xs font-semibold transition scale-tap">
-            Registrar Baixa
-          </button>
+
+        <!-- Cards de Estoque de Materiais (Copos 500, Copos 700, Isopor 500, Colheres, Tampas) -->
+        <div id="materials-stock-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <!-- Gerado dinamicamente via JS -->
+        </div>
+
+        <!-- Registro Rápido de Baixa Avulsa / Perda de Material -->
+        <div class="surface-card-subtle rounded-xl p-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div>
+            <span class="text-xs font-semibold text-slate-200 block">Baixa Avulsa ou Perda de Material</span>
+            <span class="text-[11px] text-slate-400">Registre caso algum copo/colher tenha estragado ou saído avulso fora de uma venda:</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="extra-loss-item" class="bg-[#121016] border border-[#2c2538] rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none">
+              <option value="colheres">Colheres Descartáveis</option>
+              <option value="tampas">Tampas</option>
+              <option value="copo_500">Copo de 500</option>
+              <option value="copo_700">Copo de 700</option>
+              <option value="isopor_500">Isopor de 500</option>
+            </select>
+            <input type="number" id="extra-loss-qty" min="1" value="1" class="w-16 bg-[#121016] border border-[#2c2538] rounded-lg px-2.5 py-1.5 text-xs text-center font-bold text-white focus:outline-none" />
+            <input type="text" id="extra-loss-reason" placeholder="Motivo (ex: Copo amassou)" class="bg-[#121016] border border-[#2c2538] rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none" />
+            <button id="btn-register-loss" class="px-3 py-1.5 rounded-lg bg-[#522785] hover:bg-[#602e9c] text-white text-xs font-semibold transition scale-tap">
+              Registrar Baixa
+            </button>
+          </div>
         </div>
       </div>
+
+      <!-- SEÇÃO 3: HISTÓRICO COMPLETO DE MOVIMENTAÇÕES (Com Edição e Exclusão) -->
+      <div class="space-y-3 pt-2 border-t border-[#2c2538]">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-purple-300">3. Histórico Completo de Movimentações</span>
+              <span id="tx-counter-text" class="text-[11px] text-slate-400 bg-[#16121d] px-2 py-0.5 rounded border border-[#282136]">0 registros</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-0.5">Visualize todos os lançamentos do dia, edite valores ou exclua registros com permissão de proprietária</p>
+          </div>
+
+          <!-- Filtros de Tipo -->
+          <div class="flex items-center gap-1 bg-[#14111a] p-1 rounded-xl border border-[#262030] text-xs">
+            <button data-filter="TODOS" class="filter-btn px-3 py-1 rounded-lg bg-[#2d243d] text-slate-100 font-semibold">Todos</button>
+            <button data-filter="VENDA" class="filter-btn px-3 py-1 rounded-lg text-slate-400 hover:text-slate-200">Vendas</button>
+            <button data-filter="CONSUMO_INTERNO" class="filter-btn px-3 py-1 rounded-lg text-slate-400 hover:text-slate-200">Consumo</button>
+          </div>
+        </div>
+
+        <!-- Seletor de Data de Visualização do Histórico -->
+        <div class="flex flex-wrap items-center justify-between gap-2 py-2 px-3 bg-[#14111a] rounded-xl border border-[#262030] text-xs">
+          <div class="flex items-center gap-2">
+            <span class="text-slate-400 font-medium">Data do relatório:</span>
+            <input type="date" id="filter-view-date" class="bg-[#1a1721] border border-[#2c2538] rounded-lg px-2 py-1 text-xs text-white focus:outline-none" />
+            <button type="button" id="btn-filter-today" class="px-2 py-1 rounded bg-[#251f30] hover:bg-[#322a42] text-purple-200 font-medium text-[11px]">Hoje</button>
+            <button type="button" id="btn-filter-all-dates" class="px-2 py-1 rounded bg-[#251f30] hover:bg-[#322a42] text-slate-300 font-medium text-[11px]">Todas as Datas</button>
+          </div>
+          <span id="filter-date-badge" class="text-[11px] font-semibold text-purple-300">Hoje</span>
+        </div>
+
+        <!-- Lista Completa de Transações com Scroll -->
+        <div id="tx-list-container" class="divide-y divide-[#231e2e] overflow-y-auto max-h-[380px] pr-1 bg-[#14111a]/50 p-2 rounded-xl border border-[#262030]">
+          <!-- Injetado dinamicamente via JS -->
+        </div>
+      </div>
+
     </section>
 
-    <!-- Cards de Resumo Geral -->
-    <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-      <!-- Faturamento Bruto -->
-      <div class="surface-card p-4 sm:p-5 rounded-2xl flex items-center justify-between">
-        <div>
-          <span class="text-[11px] uppercase font-semibold tracking-wider text-slate-400 block">Faturamento (<span class="metric-date-label">Hoje</span>)</span>
-          <h2 id="metric-revenue" class="text-xl sm:text-2xl font-bold text-[#6ee7b7] mt-0.5">R$ 0,00</h2>
-          <span id="metric-avg-ticket" class="text-[11px] text-slate-500 block mt-0.5">Ticket médio: R$ 0,00</span>
-        </div>
-        <div class="w-10 h-10 rounded-xl bg-[#1f2d27] text-[#6ee7b7] flex items-center justify-center border border-[#2c4037] shrink-0">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        </div>
-      </div>
-
-      <!-- Peso Total Comercializado -->
-      <div class="surface-card p-4 sm:p-5 rounded-2xl flex items-center justify-between">
-        <div>
-          <span class="text-[11px] uppercase font-semibold tracking-wider text-slate-400 block">Peso Vendido</span>
-          <h2 id="metric-total-weight" class="text-xl sm:text-2xl font-bold text-slate-100 mt-0.5">0,000 kg</h2>
-          <span id="metric-weight-grams" class="text-[11px] text-slate-500 block mt-0.5">0g na balança</span>
-        </div>
-        <div class="w-10 h-10 rounded-xl bg-[#232230] text-slate-300 flex items-center justify-center border border-[#323045] shrink-0">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
-        </div>
-      </div>
-
-      <!-- Saída de Copos & Isopores -->
-      <div class="surface-card p-4 sm:p-5 rounded-2xl flex items-center justify-between">
-        <div>
-          <span class="text-[11px] uppercase font-semibold tracking-wider text-slate-400 block">Copos / Isopores</span>
-          <h2 id="metric-sold-units" class="text-xl sm:text-2xl font-bold text-purple-200 mt-0.5">0 un</h2>
-          <span id="metric-cups-breakdown" class="text-[11px] text-slate-500 block mt-0.5">0 vendas • 0 interno</span>
-        </div>
-        <div class="w-10 h-10 rounded-xl bg-[#292038] text-purple-300 flex items-center justify-center border border-[#3b2d52] shrink-0">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-        </div>
-      </div>
-
-      <!-- Saída de Colheres & Tampas -->
-      <div class="surface-card p-4 sm:p-5 rounded-2xl flex items-center justify-between">
-        <div>
-          <span class="text-[11px] uppercase font-semibold tracking-wider text-slate-400 block">Colheres & Tampas</span>
-          <h2 id="metric-spoons-out" class="text-xl sm:text-2xl font-bold text-[#fcd34d] mt-0.5">0 colheres</h2>
-          <span id="metric-lids-out" class="text-[11px] text-slate-500 block mt-0.5">0 tampas utilizadas</span>
-        </div>
-        <div class="w-10 h-10 rounded-xl bg-[#2e261b] text-[#fcd34d] flex items-center justify-center border border-[#423625] shrink-0">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-        </div>
-      </div>
-    </section>
-
+    <!-- TELA PRINCIPAL: APENAS NOVOS LANÇAMENTOS E ÚLTIMO LANÇAMENTO REALIZADO -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       
-      <!-- Formulário de Lançamento / Edição (Coluna Esquerda) -->
-      <div class="lg:col-span-5 surface-card rounded-2xl p-5 sm:p-6 space-y-4">
+      <!-- COLUNA 1: FORMULÁRIO DE NOVO LANÇAMENTO (7 Colunas no Desktop) -->
+      <div class="lg:col-span-7 surface-card rounded-2xl p-5 sm:p-6 space-y-4">
         <div class="flex items-center justify-between border-b border-[#2a2436] pb-3">
           <h2 id="form-header-title" class="font-bold text-base sm:text-lg text-slate-100 flex items-center gap-2">
             <svg class="w-5 h-5 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Novo Lançamento
           </h2>
-          <span id="form-mode-badge" class="text-[11px] text-slate-300 font-medium bg-[#251f30] px-2.5 py-1 rounded-md border border-[#342c44]">Balança & Materiais</span>
+          <span id="form-mode-badge" class="text-[11px] text-slate-300 font-medium bg-[#251f30] px-2.5 py-1 rounded-md border border-[#342c44]">Balança & Balcão</span>
         </div>
 
         <!-- SELETOR DE DATA DA VENDA & STATUS DO CAIXA DO DIA -->
@@ -286,7 +341,7 @@
           <div class="flex items-center justify-between border-t border-[#221d2b] pt-2.5">
             <div>
               <span class="text-xs text-slate-200 font-semibold block">Colheres Descartáveis</span>
-              <span class="text-[10px] text-slate-500">Quantas colheres o cliente levou (0 se nenhuma)</span>
+              <span class="text-[10px] text-slate-500">Quantas colheres o cliente levou</span>
             </div>
             <div class="flex items-center bg-[#1e1a26] border border-[#322b40] rounded-lg overflow-hidden">
               <button type="button" id="spoons-minus" class="w-8 h-7 text-slate-300 hover:text-white hover:bg-[#2a2436] transition font-bold text-sm flex items-center justify-center scale-tap">-</button>
@@ -299,7 +354,7 @@
           <div class="flex items-center justify-between border-t border-[#221d2b] pt-2.5">
             <div>
               <span class="text-xs text-slate-200 font-semibold block">Tampas Utilizadas</span>
-              <span class="text-[10px] text-slate-500">Para viagem / entrega (0 se consumiu sem tampa)</span>
+              <span class="text-[10px] text-slate-500">Para viagem / entrega</span>
             </div>
             <div class="flex items-center bg-[#1e1a26] border border-[#322b40] rounded-lg overflow-hidden">
               <button type="button" id="lids-minus" class="w-8 h-7 text-slate-300 hover:text-white hover:bg-[#2a2436] transition font-bold text-sm flex items-center justify-center scale-tap">-</button>
@@ -320,7 +375,7 @@
         <!-- Observações / Identificação -->
         <div>
           <label id="notes-label" class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">Observação (Opcional)</label>
-          <input type="text" id="input-notes" placeholder="Ex: Leite condensado extra, para viagem..." class="w-full bg-[#14111a] border border-[#2c2538] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-purple-500/70 transition" />
+          <input type="text" id="input-notes" placeholder="Ex: Sem calda, leite em pó extra..." class="w-full bg-[#14111a] border border-[#2c2538] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-purple-500/70 transition" />
         </div>
 
         <div class="pt-2 border-t border-[#2a2436] space-y-3">
@@ -344,49 +399,114 @@
         </div>
       </div>
 
-      <!-- Painel de Histórico (Coluna Direita) -->
-      <div class="lg:col-span-7 surface-card rounded-2xl p-5 sm:p-6 flex flex-col justify-between min-h-[600px]">
-        <div>
-          <!-- Header do Histórico com Filtros e Seletor de Data de Visualização -->
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#2a2436] gap-3">
+      <!-- COLUNA 2: ÚLTIMO LANÇAMENTO REALIZADO (5 Colunas no Desktop) -->
+      <div class="lg:col-span-5 space-y-4">
+        
+        <!-- Card do Último Lançamento Realizado -->
+        <div class="surface-card rounded-2xl p-5 sm:p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-[#2a2436] pb-3">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-[#271d38] text-purple-300 flex items-center justify-center border border-[#3b2a54]">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <div>
+                <h2 class="font-bold text-base text-slate-100">Último Lançamento</h2>
+                <p class="text-[11px] text-slate-400">Conferência do atendimento mais recente</p>
+              </div>
+            </div>
+            <span id="last-tx-badge" class="px-2.5 py-0.5 text-[10px] font-semibold rounded bg-[#1e2823] text-[#6ee7b7] border border-[#2b4237]">
+              Aguardando
+            </span>
+          </div>
+
+          <!-- Detalhes do Último Lançamento (Visível quando há vendas) -->
+          <div id="last-tx-content" class="hidden space-y-3.5">
+            
+            <!-- Destaque do Valor e Tipo -->
+            <div class="bg-[#14111a] p-4 rounded-xl border border-[#262030] flex items-center justify-between">
+              <div>
+                <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Valor Registrado</span>
+                <span id="last-tx-amount" class="text-2xl font-black text-[#6ee7b7] block mt-0.5">R$ 0,00</span>
+              </div>
+              <div class="text-right">
+                <span id="last-tx-type-badge" class="inline-block px-2.5 py-1 text-[11px] font-bold rounded-lg bg-[#1e2e28] text-[#6ee7b7] border border-[#2b473d]">
+                  Venda Cliente
+                </span>
+                <span id="last-tx-time" class="text-[10px] text-slate-400 block mt-1 font-mono">--:--</span>
+              </div>
+            </div>
+
+            <!-- Grade de Detalhes da Operação -->
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div class="surface-card-subtle p-3 rounded-xl border border-[#221c2c]">
+                <span class="text-[10px] text-slate-400 uppercase font-semibold block">Recipiente</span>
+                <span id="last-tx-pkg" class="font-bold text-slate-100 mt-0.5 block truncate">Copo de 500</span>
+                <span id="last-tx-weight" class="text-[11px] text-purple-300 font-medium">500g</span>
+              </div>
+
+              <div class="surface-card-subtle p-3 rounded-xl border border-[#221c2c]">
+                <span class="text-[10px] text-slate-400 uppercase font-semibold block">Pagamento</span>
+                <span id="last-tx-payment" class="font-bold text-slate-100 mt-0.5 block">PIX</span>
+                <span id="last-tx-date" class="text-[11px] text-slate-400">Hoje</span>
+              </div>
+            </div>
+
+            <!-- Insumos e Materiais Entregues -->
+            <div class="surface-card-subtle p-3 rounded-xl border border-[#221c2c] space-y-1.5">
+              <span class="text-[10px] text-slate-400 uppercase font-semibold block">Materiais Baixados</span>
+              <div class="flex items-center gap-2 text-xs flex-wrap">
+                <span id="last-tx-spoons" class="px-2 py-0.5 rounded bg-[#2a2317] text-[#fcd34d] font-medium border border-[#3d3220] text-[11px]">
+                  1 colher
+                </span>
+                <span id="last-tx-lids" class="px-2 py-0.5 rounded bg-[#261e36] text-purple-200 font-medium border border-[#382b4f] text-[11px]">
+                  0 tampa
+                </span>
+                <span id="last-tx-qty" class="px-2 py-0.5 rounded bg-[#1e1927] text-slate-300 font-medium border border-[#2e263c] text-[11px]">
+                  1x recipiente
+                </span>
+              </div>
+            </div>
+
+            <!-- Observação (se houver) -->
+            <div id="last-tx-notes-container" class="hidden surface-card-subtle p-3 rounded-xl border border-[#221c2c]">
+              <span class="text-[10px] text-slate-400 uppercase font-semibold block">Observação</span>
+              <p id="last-tx-notes" class="text-xs text-slate-200 italic mt-0.5 font-medium"></p>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-800/60 text-emerald-200 text-xs flex items-center gap-2">
+              <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              <span class="text-[11px] font-medium">Lançamento gravado e estoque de insumos baixado com sucesso!</span>
+            </div>
+          </div>
+
+          <!-- Estado Vazio (Sem lançamentos ainda) -->
+          <div id="last-tx-empty" class="py-12 px-4 text-center text-slate-500 space-y-3">
+            <div class="w-12 h-12 rounded-2xl bg-[#1b1724] text-slate-600 flex items-center justify-center mx-auto border border-[#282236]">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
             <div>
-              <h2 class="font-bold text-base sm:text-lg text-slate-100 flex items-center gap-2">
-                <svg class="w-5 h-5 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                Movimentações & Lançamentos
-              </h2>
-              <span id="tx-counter-text" class="text-[11px] text-slate-400">0 registros gravados</span>
+              <p class="text-xs font-semibold text-slate-300">Nenhum lançamento realizado hoje ainda.</p>
+              <p class="text-[11px] text-slate-500 mt-1 max-w-xs mx-auto">Faça a primeira venda ou consumo interno no formulário ao lado para conferir aqui.</p>
             </div>
-
-            <!-- Filtros Rápidos de Tipo -->
-            <div class="flex items-center gap-1 bg-[#14111a] p-1 rounded-xl border border-[#262030] text-xs">
-              <button data-filter="TODOS" class="filter-btn px-3 py-1 rounded-lg bg-[#2d243d] text-slate-100 font-semibold">Todos</button>
-              <button data-filter="VENDA" class="filter-btn px-3 py-1 rounded-lg text-slate-400 hover:text-slate-200">Vendas</button>
-              <button data-filter="CONSUMO_INTERNO" class="filter-btn px-3 py-1 rounded-lg text-slate-400 hover:text-slate-200">Consumo</button>
-            </div>
-          </div>
-
-          <!-- Barra de Filtro de Data do Histórico -->
-          <div class="flex flex-wrap items-center justify-between gap-2 py-2.5 px-3 my-2 bg-[#14111a] rounded-xl border border-[#262030] text-xs">
-            <div class="flex items-center gap-2">
-              <span class="text-slate-400 font-medium">Exibir dia:</span>
-              <input type="date" id="filter-view-date" class="bg-[#1a1721] border border-[#2c2538] rounded-lg px-2 py-1 text-xs text-white focus:outline-none" />
-              <button type="button" id="btn-filter-today" class="px-2 py-1 rounded bg-[#251f30] hover:bg-[#322a42] text-purple-200 font-medium text-[11px]">Hoje</button>
-              <button type="button" id="btn-filter-all-dates" class="px-2 py-1 rounded bg-[#251f30] hover:bg-[#322a42] text-slate-300 font-medium text-[11px]">Todas as Datas</button>
-            </div>
-            <span id="filter-date-badge" class="text-[11px] font-semibold text-purple-300">Hoje</span>
-          </div>
-
-          <!-- Lista de Transações com Scroll -->
-          <div id="tx-list-container" class="divide-y divide-[#231e2e] overflow-y-auto max-h-[440px] pr-1 mt-1">
-            <!-- Injetado dinamicamente via JS -->
           </div>
         </div>
 
-        <!-- Rodapé do Histórico -->
-        <div class="pt-4 mt-4 border-t border-[#2a2436] text-[11px] text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-2">
-          <span>🔒 Caixa fechado só pode ser reaberto com senha da proprietária.</span>
-          <span class="text-slate-400 font-medium">Controle Diário de Caixa Ativo</span>
+        <!-- Banner Explicativo: Demais Informações no Acesso da Proprietária -->
+        <div class="surface-card-subtle rounded-2xl p-4 border border-[#2d223d] flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-[#261c36] text-purple-300 flex items-center justify-center shrink-0 border border-[#3e2c59]">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            </div>
+            <div>
+              <span class="text-xs font-bold text-slate-200 block">Gestão & Histórico Completo</span>
+              <span class="text-[11px] text-slate-400 block">Faturamento diário, estoque de copos e relatórios ficam protegidos por senha.</span>
+            </div>
+          </div>
+          <button type="button" id="btn-quick-owner-login" class="px-3.5 py-2 rounded-xl bg-[#522785] hover:bg-[#602e9c] text-white text-xs font-semibold shrink-0 transition scale-tap">
+            Acessar
+          </button>
         </div>
+
       </div>
 
     </div>
@@ -412,7 +532,7 @@
         <div>
           <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Senha / PIN da Proprietária</label>
           <input type="password" id="input-owner-password" placeholder="Digite a senha da proprietária" class="w-full bg-[#121016] border border-[#322945] rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-purple-400" />
-          <span class="text-[10px] text-slate-500 mt-1 block">Apenas a proprietária pode reabrir dias fechados, editar vendas ou alterar estoque.</span>
+          <span class="text-[10px] text-slate-500 mt-1 block">Apenas a proprietária pode visualizar faturamento, reabrir dias fechados ou alterar estoque.</span>
         </div>
 
         <button id="btn-confirm-login" class="w-full py-2.5 rounded-xl bg-[#522785] hover:bg-[#602e9c] text-white font-semibold text-xs transition scale-tap">
@@ -456,9 +576,9 @@
         </div>
       </div>
 
-      <div class="flex justify-end gap-2 pt-2">
-        <button id="btn-cancel-stock" class="px-4 py-2 rounded-xl bg-[#252030] text-slate-300 text-xs font-semibold">Cancelar</button>
-        <button id="btn-save-stock" class="px-4 py-2 rounded-xl bg-[#522785] hover:bg-[#602e9c] text-white text-xs font-semibold scale-tap">Salvar Estoque</button>
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-[#2a2436]">
+        <button id="btn-cancel-stock" class="px-4 py-2 rounded-xl bg-[#201a2b] hover:bg-[#2b233a] text-slate-300 font-semibold text-xs transition">Cancelar</button>
+        <button id="btn-save-stock" class="px-4 py-2 rounded-xl bg-[#522785] hover:bg-[#602e9c] text-white font-semibold text-xs transition scale-tap">Salvar Estoque</button>
       </div>
     </div>
   </div>
@@ -470,33 +590,41 @@
         <h3 class="font-bold text-base text-white">Alterar Senha da Proprietária</h3>
         <button id="btn-close-pw-modal" class="text-slate-400 hover:text-white p-1">✕</button>
       </div>
+
       <div class="space-y-3">
         <div>
-          <label class="text-[11px] font-semibold text-slate-400 uppercase block mb-1">Nova Senha / PIN</label>
-          <input type="password" id="input-new-pw" placeholder="Digite a nova senha" class="w-full bg-[#121016] border border-[#322945] rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none" />
+          <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Nova Senha ou PIN</label>
+          <input type="password" id="input-new-pw" placeholder="Digite a nova senha (mínimo 3 dígitos)" class="w-full bg-[#121016] border border-[#322945] rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-purple-400" />
         </div>
-        <button id="btn-save-pw" class="w-full py-2.5 rounded-xl bg-[#522785] hover:bg-[#602e9c] text-white text-xs font-semibold">Salvar Nova Senha</button>
+        <button id="btn-save-pw" class="w-full py-2.5 rounded-xl bg-[#522785] hover:bg-[#602e9c] text-white font-semibold text-xs transition scale-tap">
+          Salvar Nova Senha
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Modal: Relatório de Fechamento Profissional -->
-  <div id="modal-report" class="fixed inset-0 bg-black/80 flex items-center justify-center p-3 sm:p-5 z-50 hidden overflow-y-auto">
-    <div class="surface-card print-surface max-w-3xl w-full rounded-2xl p-5 sm:p-6 border border-[#352d47] space-y-5 my-auto max-h-[92vh] flex flex-col">
+  <!-- MODAL: RELATÓRIO DE FECHAMENTO (Estruturado + WhatsApp + CSV + Print) -->
+  <div id="modal-report" class="fixed inset-0 bg-black/80 flex items-center justify-center p-3 sm:p-5 z-50 hidden">
+    <div class="surface-card max-w-4xl w-full max-h-[92vh] rounded-2xl p-5 sm:p-6 border border-[#3f3254] flex flex-col justify-between space-y-4 overflow-hidden">
       
       <!-- Cabeçalho do Modal -->
-      <div class="flex items-start sm:items-center justify-between border-b border-[#2a2436] pb-4 gap-3 shrink-0">
-        <div>
-          <div class="flex items-center gap-2">
-            <h3 class="font-bold text-lg text-slate-100">Demonstrativo de Fechamento de Caixa</h3>
-            <span id="report-badge-date" class="text-[11px] font-semibold px-2.5 py-0.5 rounded-md bg-[#251f30] text-purple-200 border border-[#362d47]">Hoje</span>
+      <div class="flex items-center justify-between border-b border-[#2a2436] pb-3 shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-[#2d1f42] text-purple-200 flex items-center justify-center border border-[#483269]">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           </div>
-          <p id="report-period-subtitle" class="text-xs text-slate-400 mt-0.5">Mont' Açaí • Resumo consolidado de caixa, copos, isopores, colheres e tampas</p>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="font-bold text-base sm:text-lg text-slate-100">Relatório Executivo de Fechamento</h3>
+              <span id="report-badge-date" class="px-2 py-0.5 text-[10px] font-bold rounded bg-[#2b1f3d] text-purple-200 border border-[#432d63]">Hoje</span>
+            </div>
+            <p id="report-period-subtitle" class="text-xs text-slate-400">Mont' Açaí • Auditoria completa do turno e faturamento</p>
+          </div>
         </div>
-        <button id="btn-close-report" class="no-print text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-[#251f30] transition">✕</button>
+        <button id="btn-close-report" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-[#251f30] transition text-sm">✕ Fechar</button>
       </div>
 
-      <!-- Abas de Visualização -->
+      <!-- Abas de Navegação do Relatório -->
       <div class="no-print flex items-center justify-between gap-2 bg-[#14111a] p-1 rounded-xl border border-[#262030] shrink-0">
         <button id="tab-report-visual" class="flex-1 py-2 px-3 rounded-lg text-xs font-semibold bg-[#2d243d] text-white transition">
           Visão Detalhada (Financeiro + Estoque de Materiais)
