@@ -31,6 +31,30 @@ body {
   background: #483e5c;
 }
 
+/* Otimizações de Toque e Responsividade Mobile */
+button, input, select, textarea, .scale-tap {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Evita zoom automático involuntário no iOS ao focar em inputs no celular */
+@media (max-width: 640px) {
+  input[type="text"],
+  input[type="number"],
+  input[type="password"],
+  input[type="date"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Ajuste de área segura para dispositivos móveis com notch / barra de navegação */
+body {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
+  -webkit-text-size-adjust: 100%;
+}
+
 /* Superfícies de cards sóbrias (sem efeito neon) */
 .surface-card {
   background: #1a1721;
@@ -49,7 +73,7 @@ body {
 }
 
 .scale-tap:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
 }
 
 /* Configuração de impressão limpa para o relatório de fechamento */

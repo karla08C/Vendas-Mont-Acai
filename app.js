@@ -664,7 +664,7 @@ function renderPackagingButtons() {
     const isSelected = state.selectedPackaging.id === pkg.id;
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = `p-3 rounded-xl text-center border text-xs font-semibold transition scale-tap flex flex-col items-center justify-center gap-1 ${
+    btn.className = `p-2 sm:p-3 rounded-xl text-center border text-[11px] sm:text-xs font-semibold transition scale-tap flex flex-col items-center justify-center gap-1 min-h-[72px] sm:min-h-[78px] ${
       isSelected 
         ? 'border-[#6b37ab] bg-[#2a1d3d] text-slate-100'
         : 'border-[#262030] bg-[#14111a] text-slate-400 hover:border-[#352d42] hover:text-slate-200'
@@ -696,7 +696,7 @@ function renderPaymentButtons() {
     const isSelected = state.selectedPayment === pm.label;
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = `py-2.5 px-2 rounded-xl border text-xs font-semibold text-center transition scale-tap flex items-center justify-center gap-1 ${
+    btn.className = `py-3 sm:py-2.5 px-2 rounded-xl border text-xs font-semibold text-center transition scale-tap flex items-center justify-center gap-1 min-h-[44px] ${
       isSelected
         ? 'border-[#3b6e5c] bg-[#1c2e28] text-[#6ee7b7]'
         : 'border-[#262030] bg-[#14111a] text-slate-400 hover:border-[#352d42] hover:text-slate-200'

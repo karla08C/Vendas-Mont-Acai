@@ -17,13 +17,13 @@
   <div class="max-w-6xl mx-auto space-y-6">
 
     <!-- Top Bar -->
-    <header class="surface-card rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-      <div class="flex items-center gap-3.5">
-        <div class="relative group">
+    <header class="surface-card rounded-2xl p-3.5 sm:p-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3.5 sm:gap-4">
+      <div class="flex items-center gap-3 sm:gap-3.5">
+        <div class="relative group shrink-0">
           <input type="file" id="logo-input" accept="image/*" class="hidden" />
-          <div id="logo-display-container" class="w-12 h-12 rounded-xl bg-[#3b1d5e] flex items-center justify-center text-purple-100 border border-[#522b7f] overflow-hidden cursor-pointer relative" title="Clique para enviar ou alterar a logo da loja">
+          <div id="logo-display-container" class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[#3b1d5e] flex items-center justify-center text-purple-100 border border-[#522b7f] overflow-hidden cursor-pointer relative" title="Clique para enviar ou alterar a logo da loja">
             <div id="default-logo-icon" class="flex items-center justify-center">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 009-9H3a9 9 0 009 9zm0-18a4 4 0 014 4v2H8V7a4 4 0 014-4z"/>
               </svg>
             </div>
@@ -35,32 +35,32 @@
           <button id="btn-remove-logo" title="Remover logo e voltar ao ícone padrão" class="hidden absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-700 hover:bg-rose-600 text-white text-[10px] font-bold items-center justify-center shadow transition scale-tap">✕</button>
         </div>
 
-        <div>
-          <div class="flex flex-wrap items-center gap-2">
-            <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-100">Mont' Açaí</h1>
-            <span id="role-badge" class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-[#232f29] text-[#6ee7b7] border border-[#2f4239]">
-              <span class="w-1.5 h-1.5 rounded-full bg-[#34d399] mr-1.5"></span>
+        <div class="min-w-0 flex-1">
+          <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            <h1 class="text-lg sm:text-2xl font-bold tracking-tight text-slate-100">Mont' Açaí</h1>
+            <span id="role-badge" class="inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-md text-[10px] sm:text-[11px] font-semibold bg-[#232f29] text-[#6ee7b7] border border-[#2f4239]">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#34d399] mr-1 sm:mr-1.5"></span>
               Modo Balcão (PDV)
             </span>
-            <span id="top-cash-status" class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#1a1624] text-purple-200 border border-[#342a45]">
+            <span id="top-cash-status" class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-semibold bg-[#1a1624] text-purple-200 border border-[#342a45]">
               📅 Caixa: <strong id="top-active-date" class="ml-1 text-white">--/--/----</strong>
             </span>
-            <span id="cloud-sync-badge" class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#14232c] text-[#67e8f9] border border-[#21404e]" title="Status de sincronização em tempo real com o Firebase Firestore">
-              <span id="cloud-dot" class="w-1.5 h-1.5 rounded-full bg-[#22d3ee] mr-1.5 animate-pulse"></span>
+            <span id="cloud-sync-badge" class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-semibold bg-[#14232c] text-[#67e8f9] border border-[#21404e]" title="Status de sincronização em tempo real com o Firebase Firestore">
+              <span id="cloud-dot" class="w-1.5 h-1.5 rounded-full bg-[#22d3ee] mr-1 sm:mr-1.5 animate-pulse"></span>
               <span id="cloud-status-text">☁️ Nuvem Conectando...</span>
             </span>
           </div>
           <div class="flex items-center gap-2 mt-0.5">
-            <p class="text-xs text-slate-400">Controle de pesagem e lançamento de pedidos</p>
+            <p class="text-[11px] sm:text-xs text-slate-400 truncate">Controle de pesagem e lançamento de pedidos</p>
             <span class="text-slate-600 hidden sm:inline">•</span>
-            <button id="btn-trigger-upload" class="text-[11px] text-purple-300 hover:text-purple-200 font-medium underline transition">Alterar Logo</button>
+            <button id="btn-trigger-upload" class="text-[10px] sm:text-[11px] text-purple-300 hover:text-purple-200 font-medium underline transition shrink-0">Alterar Logo</button>
           </div>
         </div>
       </div>
 
-      <div class="flex items-center gap-2 self-stretch sm:self-auto">
+      <div class="flex items-center gap-2 self-stretch sm:self-auto shrink-0">
         <!-- Botão de Login / Alternar Modo da Proprietária -->
-        <button id="btn-owner-access" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#2a1f3d] hover:bg-[#36284f] text-purple-200 border border-[#463466] text-xs font-semibold flex items-center justify-center gap-2 transition scale-tap">
+        <button id="btn-owner-access" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#2a1f3d] hover:bg-[#36284f] text-purple-200 border border-[#463466] text-xs font-semibold flex items-center justify-center gap-2 transition scale-tap min-h-[42px]">
           <svg class="w-4 h-4 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
           <span id="btn-owner-label">Login Proprietária</span>
         </button>
@@ -175,29 +175,31 @@
         </div>
 
         <!-- Cards de Estoque de Materiais (Copos 500, Copos 700, Isopor 500, Colheres, Tampas) -->
-        <div id="materials-stock-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <div id="materials-stock-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
           <!-- Gerado dinamicamente via JS -->
         </div>
 
         <!-- Registro Rápido de Baixa Avulsa / Perda de Material -->
-        <div class="surface-card-subtle rounded-xl p-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div class="surface-card-subtle rounded-xl p-3.5 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
           <div>
             <span class="text-xs font-semibold text-slate-200 block">Baixa Avulsa ou Perda de Material</span>
             <span class="text-[11px] text-slate-400">Registre caso algum copo/colher tenha estragado ou saído avulso fora de uma venda:</span>
           </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <select id="extra-loss-item" class="bg-[#121016] border border-[#2c2538] rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none">
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <select id="extra-loss-item" class="w-full sm:w-auto bg-[#121016] border border-[#2c2538] rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none">
               <option value="colheres">Colheres Descartáveis</option>
               <option value="tampas">Tampas</option>
               <option value="copo_500">Copo de 500</option>
               <option value="copo_700">Copo de 700</option>
               <option value="isopor_500">Isopor de 500</option>
             </select>
-            <input type="number" id="extra-loss-qty" min="1" value="1" class="w-16 bg-[#121016] border border-[#2c2538] rounded-lg px-2.5 py-1.5 text-xs text-center font-bold text-white focus:outline-none" />
-            <input type="text" id="extra-loss-reason" placeholder="Motivo (ex: Copo amassou)" class="bg-[#121016] border border-[#2c2538] rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none" />
-            <button id="btn-register-loss" class="px-3 py-1.5 rounded-lg bg-[#522785] hover:bg-[#602e9c] text-white text-xs font-semibold transition scale-tap">
-              Registrar Baixa
-            </button>
+            <div class="flex items-center gap-2">
+              <input type="number" id="extra-loss-qty" min="1" value="1" class="w-16 bg-[#121016] border border-[#2c2538] rounded-lg px-2.5 py-2 text-xs text-center font-bold text-white focus:outline-none" />
+              <input type="text" id="extra-loss-reason" placeholder="Motivo (ex: Amassou)" class="flex-1 sm:w-44 bg-[#121016] border border-[#2c2538] rounded-lg px-2.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none" />
+              <button id="btn-register-loss" class="px-3.5 py-2 rounded-lg bg-[#522785] hover:bg-[#602e9c] text-white text-xs font-semibold transition scale-tap shrink-0 min-h-[38px]">
+                Registrar
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -335,9 +337,9 @@
               <span class="text-[10px] text-slate-500">Recipientes usados neste lançamento</span>
             </div>
             <div class="flex items-center bg-[#1e1a26] border border-[#322b40] rounded-lg overflow-hidden">
-              <button type="button" id="qty-minus" class="w-8 h-7 text-slate-300 hover:text-white hover:bg-[#2a2436] transition font-bold text-sm flex items-center justify-center scale-tap">-</button>
-              <input type="number" id="input-qty" min="1" value="1" class="w-9 bg-transparent text-center text-xs font-bold text-white focus:outline-none" />
-              <button type="button" id="qty-plus" class="w-8 h-7 text-slate-300 hover:text-white hover:bg-[#2a2436] transition font-bold text-sm flex items-center justify-center scale-tap">+</button>
+              <button type="button" id="qty-minus" class="w-10 sm:w-8 h-10 sm:h-8 text-slate-300 hover:text-white hover:bg-[#2a2436] transition font-bold text-base sm:text-sm flex items-center justify-center scale-tap">-</button>
+              <input type="number" id="input-qty" min="1" value="1" class="w-11 sm:w-9 bg-transparent text-center text-sm sm:text-xs font-bold text-white focus:outline-none" />
+              <button type="button" id="qty-plus" class="w-10 sm:w-8 h-10 sm:h-8 text-slate-300 hover:text-white hover:bg-[#2a2436] transition font-bold text-base sm:text-sm flex items-center justify-center scale-tap">+</button>
             </div>
           </div>
 
@@ -348,9 +350,9 @@
               <span class="text-[10px] text-slate-500">Quantas colheres o cliente levou</span>
             </div>
             <div class="flex items-center bg-[#1e1a26] border border-[#322b40] rounded-lg overflow-hidden">
-              <button type="button" id="spoons-minus" class="w-8 h-7 text-slate-300 hover:text-white hover:bg-[#2a2436] transition font-bold text-sm flex items-center justify-center scale-tap">-</button>
-              <input type="number" id="input-spoons" min="0" value="1" class="w-9 bg-transparent text-center text-xs font-bold text-[#fcd34d] focus:outline-none" />
-              <button type="button" id="spoons-plus" class="w-8 h-7 text-slate-300 hover:text-white hover:bg-[#2a2436] transition font-bold text-sm flex items-center justify-center scale-tap">+</button>
+              <button type="button" id="spoons-minus" class="w-10 sm:w-8 h-10 sm:h-8 text-slate-300 hover:text-white hover:bg-[#2a2436] transition font-bold text-base sm:text-sm flex items-center justify-center scale-tap">-</button>
+              <input type="number" id="input-spoons" min="0" value="1" class="w-11 sm:w-9 bg-transparent text-center text-sm sm:text-xs font-bold text-[#fcd34d] focus:outline-none" />
+              <button type="button" id="spoons-plus" class="w-10 sm:w-8 h-10 sm:h-8 text-slate-300 hover:text-white hover:bg-[#2a2436] transition font-bold text-base sm:text-sm flex items-center justify-center scale-tap">+</button>
             </div>
           </div>
 
@@ -361,9 +363,9 @@
               <span class="text-[10px] text-slate-500">Para viagem / entrega</span>
             </div>
             <div class="flex items-center bg-[#1e1a26] border border-[#322b40] rounded-lg overflow-hidden">
-              <button type="button" id="lids-minus" class="w-8 h-7 text-slate-300 hover:text-white hover:bg-[#2a2436] transition font-bold text-sm flex items-center justify-center scale-tap">-</button>
-              <input type="number" id="input-lids" min="0" value="0" class="w-9 bg-transparent text-center text-xs font-bold text-purple-200 focus:outline-none" />
-              <button type="button" id="lids-plus" class="w-8 h-7 text-slate-300 hover:text-white hover:bg-[#2a2436] transition font-bold text-sm flex items-center justify-center scale-tap">+</button>
+              <button type="button" id="lids-minus" class="w-10 sm:w-8 h-10 sm:h-8 text-slate-300 hover:text-white hover:bg-[#2a2436] transition font-bold text-base sm:text-sm flex items-center justify-center scale-tap">-</button>
+              <input type="number" id="input-lids" min="0" value="0" class="w-11 sm:w-9 bg-transparent text-center text-sm sm:text-xs font-bold text-purple-200 focus:outline-none" />
+              <button type="button" id="lids-plus" class="w-10 sm:w-8 h-10 sm:h-8 text-slate-300 hover:text-white hover:bg-[#2a2436] transition font-bold text-base sm:text-sm flex items-center justify-center scale-tap">+</button>
             </div>
           </div>
         </div>
@@ -517,8 +519,8 @@
   </div>
 
   <!-- MODAL DE SENHA DA PROPRIETÁRIA (Para Login, Edição, Exclusão de Venda ou Reabertura de Caixa) -->
-  <div id="modal-owner-login" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
-    <div class="surface-card max-w-sm w-full rounded-2xl p-6 border border-[#42325c] space-y-4">
+  <div id="modal-owner-login" class="fixed inset-0 bg-black/80 flex items-center justify-center p-3 sm:p-4 z-50 hidden">
+    <div class="surface-card max-w-sm w-full max-h-[92vh] overflow-y-auto rounded-2xl p-5 sm:p-6 border border-[#42325c] space-y-4">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2.5">
           <div class="w-10 h-10 rounded-xl bg-[#2d1f42] text-purple-200 flex items-center justify-center border border-[#483269]">
@@ -539,7 +541,7 @@
           <span class="text-[10px] text-slate-500 mt-1 block">Apenas a proprietária pode visualizar faturamento, reabrir dias fechados ou alterar estoque.</span>
         </div>
 
-        <button id="btn-confirm-login" class="w-full py-2.5 rounded-xl bg-[#522785] hover:bg-[#602e9c] text-white font-semibold text-xs transition scale-tap">
+        <button id="btn-confirm-login" class="w-full py-2.5 rounded-xl bg-[#522785] hover:bg-[#602e9c] text-white font-semibold text-xs transition scale-tap min-h-[42px]">
           Confirmar Senha
         </button>
       </div>
@@ -547,8 +549,8 @@
   </div>
 
   <!-- MODAL: ABASTECER / AJUSTAR ESTOQUE INICIAL DE MATERIAIS -->
-  <div id="modal-stock-adjust" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
-    <div class="surface-card max-w-md w-full rounded-2xl p-6 border border-[#42325c] space-y-4">
+  <div id="modal-stock-adjust" class="fixed inset-0 bg-black/80 flex items-center justify-center p-3 sm:p-4 z-50 hidden">
+    <div class="surface-card max-w-md w-full max-h-[92vh] overflow-y-auto rounded-2xl p-5 sm:p-6 border border-[#42325c] space-y-4">
       <div class="flex items-center justify-between border-b border-[#2a2436] pb-3">
         <div>
           <h3 class="font-bold text-base text-white">Abastecer / Definir Estoque Inicial</h3>
@@ -582,14 +584,14 @@
 
       <div class="flex items-center justify-end gap-2 pt-2 border-t border-[#2a2436]">
         <button id="btn-cancel-stock" class="px-4 py-2 rounded-xl bg-[#201a2b] hover:bg-[#2b233a] text-slate-300 font-semibold text-xs transition">Cancelar</button>
-        <button id="btn-save-stock" class="px-4 py-2 rounded-xl bg-[#522785] hover:bg-[#602e9c] text-white font-semibold text-xs transition scale-tap">Salvar Estoque</button>
+        <button id="btn-save-stock" class="px-4 py-2 rounded-xl bg-[#522785] hover:bg-[#602e9c] text-white font-semibold text-xs transition scale-tap min-h-[38px]">Salvar Estoque</button>
       </div>
     </div>
   </div>
 
   <!-- MODAL: ALTERAR SENHA DA PROPRIETÁRIA -->
-  <div id="modal-change-password" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
-    <div class="surface-card max-w-sm w-full rounded-2xl p-6 border border-[#42325c] space-y-4">
+  <div id="modal-change-password" class="fixed inset-0 bg-black/80 flex items-center justify-center p-3 sm:p-4 z-50 hidden">
+    <div class="surface-card max-w-sm w-full max-h-[92vh] overflow-y-auto rounded-2xl p-5 sm:p-6 border border-[#42325c] space-y-4">
       <div class="flex items-center justify-between border-b border-[#2a2436] pb-3">
         <h3 class="font-bold text-base text-white">Alterar Senha da Proprietária</h3>
         <button id="btn-close-pw-modal" class="text-slate-400 hover:text-white p-1">✕</button>
@@ -600,7 +602,7 @@
           <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Nova Senha ou PIN</label>
           <input type="password" id="input-new-pw" placeholder="Digite a nova senha (mínimo 3 dígitos)" class="w-full bg-[#121016] border border-[#322945] rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-purple-400" />
         </div>
-        <button id="btn-save-pw" class="w-full py-2.5 rounded-xl bg-[#522785] hover:bg-[#602e9c] text-white font-semibold text-xs transition scale-tap">
+        <button id="btn-save-pw" class="w-full py-2.5 rounded-xl bg-[#522785] hover:bg-[#602e9c] text-white font-semibold text-xs transition scale-tap min-h-[42px]">
           Salvar Nova Senha
         </button>
       </div>
@@ -759,8 +761,8 @@
   </div>
 
   <!-- MODAL: CONFIRMAR FECHAMENTO DE CAIXA DO DIA -->
-  <div id="modal-clear-shift" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
-    <div class="surface-card max-w-sm w-full rounded-2xl p-6 border border-[#3a2832] space-y-4">
+  <div id="modal-clear-shift" class="fixed inset-0 bg-black/80 flex items-center justify-center p-3 sm:p-4 z-50 hidden">
+    <div class="surface-card max-w-sm w-full max-h-[92vh] overflow-y-auto rounded-2xl p-5 sm:p-6 border border-[#3a2832] space-y-4">
       <div class="w-12 h-12 rounded-xl bg-[#2b1c22] text-rose-400 flex items-center justify-center border border-[#422831] mx-auto">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
       </div>
@@ -774,8 +776,8 @@
       </div>
 
       <div class="grid grid-cols-2 gap-2 pt-2">
-        <button id="btn-cancel-modal" class="py-2.5 rounded-xl bg-[#252030] hover:bg-[#302a3d] text-slate-300 font-semibold text-xs transition">Cancelar</button>
-        <button id="btn-confirm-clear" class="py-2.5 rounded-xl bg-rose-700 hover:bg-rose-600 text-white font-semibold text-xs transition scale-tap">Sim, Fechar Caixa</button>
+        <button id="btn-cancel-modal" class="py-2.5 rounded-xl bg-[#252030] hover:bg-[#302a3d] text-slate-300 font-semibold text-xs transition min-h-[42px]">Cancelar</button>
+        <button id="btn-confirm-clear" class="py-2.5 rounded-xl bg-rose-700 hover:bg-rose-600 text-white font-semibold text-xs transition scale-tap min-h-[42px]">Sim, Fechar Caixa</button>
       </div>
     </div>
   </div>
