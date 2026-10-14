@@ -50,7 +50,15 @@ O projeto foi estruturado utilizando tecnologias web modernas, leves e sem depen
 - **Resumo Formatado para WhatsApp:** Cópia com 1 clique do fechamento completo para envio à gerência.
 - **Exportação para Excel (`.csv`) e Impressão / PDF:** Download de planilha compatível com Excel e layout de impressão limpo.
 
+### 📅 4. Controle Diário de Caixa por Data (Aberto / Fechado)
+- **Seletor de Data da Venda:** Permite registrar as vendas com a data exata da pesagem (padrão no dia de hoje).
+- **Fechamento do Caixa do Dia:** Ao concluir todos os atendimentos do turno/dia, a operadora fecha o caixa daquela data.
+- **Bloqueio Automático:** Dias com caixa fechado ficam bloqueados contra novos lançamentos ou alterações acidentais.
+- **Reabertura Protegida por Senha:** Se for necessário alterar ou lançar algo em um dia já fechado, o sistema exige a senha da proprietária para desbloquear o dia.
+- **Filtro de Histórico e Métricas:** Navegação e conferência rápida por dia específico ou consolidado geral.
+
 ---
+
 
 ## 📁 Estrutura de Arquivos
 

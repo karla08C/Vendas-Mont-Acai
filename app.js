@@ -1,10 +1,10 @@
 /**
  * Mont' Açaí - Sistema PDV, Balança & Controle de Materiais
  * Lógica principal de vendas, auditoria de estoque (copos, isopores, colheres e tampas),
- * autenticação da proprietária e geração de relatórios.
+ * controle diário de fechamento de caixa por data, autenticação da proprietária e relatórios.
  */
 
-// Opções de embalagens
+// Opções de recipientes e embalagens
 const PACKAGING_OPTIONS = [
   { id: 'copo_500', label: 'Copo de 500', volume: '500ml', icon: 'cup' },
   { id: 'copo_700', label: 'Copo de 700', volume: '700ml', icon: 'cup' },
@@ -28,6 +28,24 @@ const PAYMENT_METHODS = [
   { id: 'DINHEIRO', label: 'Dinheiro' },
 ];
 
+// Utilitários de Data Local
+function getTodayLocalDate() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatDisplayDate(isoDateStr) {
+  if (!isoDateStr || isoDateStr === 'TODOS') return 'Todas as Datas';
+  const parts = isoDateStr.split('-');
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return isoDateStr;
+}
+
 // Estado Geral da Aplicação
 const state = {
   transactions: [],
@@ -38,6 +56,9 @@ const state = {
     colheres: 250,
     tampas: 150,
   },
+  closedDays: {}, // Mapeamento { 'YYYY-MM-DD': { closedAt: '19:40', closedDate: 'YYYY-MM-DD' } }
+  selectedDate: getTodayLocalDate(), // Data ativa no formulário de vendas
+  viewFilterDate: getTodayLocalDate(), // Data ativa para exibição no histórico e métricas
   isOwnerLoggedIn: false,
   ownerPassword: '1234',
   pendingOwnerAction: null,
@@ -60,6 +81,7 @@ function formatKg(grams) {
 function showToast(message) {
   const toast = document.getElementById('toast-notification');
   const msgEl = document.getElementById('toast-message');
+  if (!toast || !msgEl) return;
   msgEl.textContent = message;
   toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
   setTimeout(() => {
@@ -82,14 +104,26 @@ function loadAppData() {
       state.initialStock = { ...state.initialStock, ...JSON.parse(savedStock) };
     }
 
+    const savedClosed = localStorage.getItem('mont_acai_closed_days_v1');
+    if (savedClosed) {
+      state.closedDays = JSON.parse(savedClosed) || {};
+    } else {
+      state.closedDays = {};
+    }
+
     const raw = localStorage.getItem('acai_flow_v3');
     if (raw) {
       state.transactions = JSON.parse(raw);
+      // Garantir compatibilidade com registros antigos adicionando o campo date
+      state.transactions.forEach(tx => {
+        if (!tx.date) tx.date = getTodayLocalDate();
+      });
     } else {
       state.transactions = [];
     }
   } catch (e) {
     state.transactions = [];
+    state.closedDays = {};
   }
 }
 
@@ -97,7 +131,7 @@ function saveTransactions() {
   try {
     localStorage.setItem('acai_flow_v3', JSON.stringify(state.transactions));
   } catch (e) {
-    console.error('Falha de armazenamento:', e);
+    console.error('Falha de armazenamento de vendas:', e);
   }
 }
 
@@ -109,7 +143,73 @@ function saveStock() {
   }
 }
 
-function computeMaterialsUsage() {
+function saveClosedDays() {
+  try {
+    localStorage.setItem('mont_acai_closed_days_v1', JSON.stringify(state.closedDays));
+  } catch (e) {
+    console.error('Erro ao salvar dias fechados:', e);
+  }
+}
+
+// Verifica e atualiza os elementos de UI com base no status do caixa da data
+function checkDateStatus(dateStr) {
+  const isClosed = Boolean(state.closedDays[dateStr]);
+  const statusBadge = document.getElementById('day-cash-status-badge');
+  const reopenBtn = document.getElementById('btn-reopen-day');
+  const closedBanner = document.getElementById('closed-day-banner');
+  const submitBtn = document.getElementById('btn-submit-tx');
+  const inputWeight = document.getElementById('input-weight');
+  const inputVal = document.getElementById('input-val');
+  const inputNotes = document.getElementById('input-notes');
+  const modalDateLabel = document.getElementById('modal-close-date-label');
+
+  if (modalDateLabel) {
+    modalDateLabel.textContent = formatDisplayDate(dateStr);
+  }
+
+  if (isClosed) {
+    // Caixa Fechado
+    if (statusBadge) {
+      statusBadge.className = 'px-2 py-0.5 text-[10px] font-bold rounded bg-rose-950 text-rose-300 border border-rose-800 flex items-center gap-1';
+      statusBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>🔒 Caixa Fechado`;
+    }
+    if (reopenBtn) reopenBtn.classList.remove('hidden');
+    if (closedBanner) closedBanner.classList.remove('hidden');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-40', 'cursor-not-allowed');
+    }
+    if (inputWeight) inputWeight.disabled = true;
+    if (inputVal) inputVal.disabled = true;
+    if (inputNotes) inputNotes.disabled = true;
+  } else {
+    // Caixa Aberto
+    if (statusBadge) {
+      statusBadge.className = 'px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-950 text-emerald-300 border border-emerald-800 flex items-center gap-1';
+      statusBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>● Caixa Aberto`;
+    }
+    if (reopenBtn) reopenBtn.classList.add('hidden');
+    if (closedBanner) closedBanner.classList.add('hidden');
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+    }
+    if (inputWeight) inputWeight.disabled = false;
+    if (inputVal && state.currentType === 'VENDA') inputVal.disabled = false;
+    if (inputNotes) inputNotes.disabled = false;
+  }
+}
+
+// Retorna as transações filtradas pela data de visualização
+function getTransactionsForCurrentView() {
+  if (state.viewFilterDate === 'TODOS') {
+    return state.transactions;
+  }
+  return state.transactions.filter(t => (t.date || getTodayLocalDate()) === state.viewFilterDate);
+}
+
+function computeMaterialsUsage(filteredTxList) {
+  const targetList = filteredTxList || getTransactionsForCurrentView();
   const usage = {};
   MATERIALS_CATALOG.forEach(mat => {
     usage[mat.key] = {
@@ -123,7 +223,7 @@ function computeMaterialsUsage() {
     };
   });
 
-  state.transactions.forEach(tx => {
+  targetList.forEach(tx => {
     const isVenda = tx.type === 'VENDA';
     const qty = Number(tx.quantity) || 0;
     const spoons = tx.spoons !== undefined ? Number(tx.spoons) : qty;
@@ -176,7 +276,7 @@ function renderOwnerMaterialsPanel() {
 
         <div class="pt-1 border-t border-[#221d2b] flex items-baseline justify-between">
           <div>
-            <span class="text-[10px] text-slate-400 block">Saíram Hoje</span>
+            <span class="text-[10px] text-slate-400 block">Saíram</span>
             <span class="text-sm font-bold text-rose-300">-${item.totalOut} un</span>
           </div>
           <div class="text-right">
@@ -200,7 +300,9 @@ function calculateMetrics() {
   let soldUnits = 0;
   let totalWeightSold = 0;
 
-  state.transactions.forEach(tx => {
+  const txList = getTransactionsForCurrentView();
+
+  txList.forEach(tx => {
     const qty = Number(tx.quantity) || 0;
     const weightTotal = (Number(tx.weight) || 0) * qty;
 
@@ -212,7 +314,7 @@ function calculateMetrics() {
     }
   });
 
-  const usage = computeMaterialsUsage();
+  const usage = computeMaterialsUsage(txList);
   const totalCupsOut = usage.copo_500.totalOut + usage.copo_700.totalOut + usage.isopor_500.totalOut;
   const avgTicket = salesCount > 0 ? (revenue / salesCount) : 0;
 
@@ -224,13 +326,14 @@ function calculateMetrics() {
   document.getElementById('metric-weight-grams').textContent = `${totalWeightSold.toLocaleString('pt-BR')}g pesados`;
   document.getElementById('metric-spoons-out').textContent = `${usage.colheres.totalOut} colheres`;
   document.getElementById('metric-lids-out').textContent = `${usage.tampas.totalOut} tampas utilizadas`;
-  document.getElementById('tx-counter-text').textContent = `${state.transactions.length} registros gravados`;
+  document.getElementById('tx-counter-text').textContent = `${txList.length} registros gravados`;
 
   renderOwnerMaterialsPanel();
 }
 
 function renderPackagingButtons() {
   const container = document.getElementById('packaging-options');
+  if (!container) return;
   container.innerHTML = '';
 
   PACKAGING_OPTIONS.forEach(pkg => {
@@ -262,6 +365,7 @@ function renderPackagingButtons() {
 
 function renderPaymentButtons() {
   const container = document.getElementById('payment-methods');
+  if (!container) return;
   container.innerHTML = '';
 
   PAYMENT_METHODS.forEach(pm => {
@@ -314,7 +418,10 @@ function setupTypeToggle() {
     vendaBtn.className = 'py-2.5 px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-2 bg-[#4c2478] text-white scale-tap';
     consumoBtn.className = 'py-2.5 px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-2 text-slate-400 hover:text-slate-200 scale-tap';
     
-    valInput.disabled = false;
+    // Habilitar apenas se o caixa não estiver fechado
+    if (!state.closedDays[state.selectedDate]) {
+      valInput.disabled = false;
+    }
     if (valInput.value === '0.00') valInput.value = '';
     paymentContainer.style.display = 'block';
     notesLabel.textContent = 'Observação (Opcional)';
@@ -357,6 +464,12 @@ function resetEditMode() {
 }
 
 function handleCreateTransaction() {
+  // 1. Bloqueio estrito se o dia selecionado já estiver fechado
+  if (state.closedDays[state.selectedDate]) {
+    showToast(`O caixa do dia ${formatDisplayDate(state.selectedDate)} está fechado. Reabra o caixa com a senha para lançar.`);
+    return;
+  }
+
   const weightInput = document.getElementById('input-weight');
   const valInput = document.getElementById('input-val');
   const qtyInput = document.getElementById('input-qty');
@@ -390,6 +503,7 @@ function handleCreateTransaction() {
     if (index !== -1) {
       state.transactions[index] = {
         ...state.transactions[index],
+        date: state.selectedDate,
         packaging: state.selectedPackaging.label,
         packageKey: state.selectedPackaging.id,
         weight: weight,
@@ -416,6 +530,7 @@ function handleCreateTransaction() {
 
   const newTx = {
     id: 'tx-' + Date.now(),
+    date: state.selectedDate, // Salva na data selecionada no seletor
     timestamp: timeFormatted,
     packaging: state.selectedPackaging.label,
     packageKey: state.selectedPackaging.id,
@@ -432,6 +547,15 @@ function handleCreateTransaction() {
 
   state.transactions.unshift(newTx);
   saveTransactions();
+
+  // Se a visualização estiver em outro dia, atualiza para o dia do lançamento para visualizá-lo
+  if (state.viewFilterDate !== 'TODOS' && state.viewFilterDate !== state.selectedDate) {
+    state.viewFilterDate = state.selectedDate;
+    const filterInput = document.getElementById('filter-view-date');
+    if (filterInput) filterInput.value = state.selectedDate;
+    updateFilterBadge();
+  }
+
   renderTransactions();
   calculateMetrics();
 
@@ -439,7 +563,7 @@ function handleCreateTransaction() {
   showToast(isVenda ? 'Venda e saída de materiais registradas!' : 'Consumo interno e materiais registrados!');
 }
 
-// Exige SEMPRE digitar a senha da proprietária para editar ou excluir vendas
+// Modal universal que EXIGE SEMPRE a senha da proprietária
 function promptOwnerPasswordAlways(title, subtitle, actionCallback) {
   state.pendingOwnerAction = actionCallback;
   document.getElementById('auth-modal-title').textContent = title || 'Senha da Proprietária';
@@ -457,14 +581,26 @@ window.editTx = function(id) {
     return;
   }
 
+  const txDate = tx.date || getTodayLocalDate();
+  if (state.closedDays[txDate]) {
+    showToast(`O caixa de ${formatDisplayDate(txDate)} está fechado. Reabra o caixa deste dia para editar.`);
+    return;
+  }
+
   promptOwnerPasswordAlways(
     'Editar Venda / Lançamento',
-    'Somente a proprietária pode editar. Digite a senha:',
+    'Somente a proprietária pode editar vendas. Digite a senha:',
     () => {
       state.editingTxId = tx.id;
       const pkg = PACKAGING_OPTIONS.find(p => p.id === tx.packageKey || p.label === tx.packaging) || PACKAGING_OPTIONS[0];
       state.selectedPackaging = pkg;
       renderPackagingButtons();
+
+      // Ajusta data do formulário para a data original da venda
+      state.selectedDate = txDate;
+      const dateInput = document.getElementById('input-sale-date');
+      if (dateInput) dateInput.value = state.selectedDate;
+      checkDateStatus(state.selectedDate);
 
       if (tx.type === 'VENDA') {
         document.getElementById('type-venda-btn').click();
@@ -481,7 +617,7 @@ window.editTx = function(id) {
       document.getElementById('input-lids').value = tx.lids || 0;
       document.getElementById('input-notes').value = tx.notes || '';
 
-      document.getElementById('form-header-title').innerHTML = `<span class="text-[#fcd34d]">✏️ Editando Venda (${tx.timestamp})</span>`;
+      document.getElementById('form-header-title').innerHTML = `<span class="text-[#fcd34d]">✏️ Editando Lançamento (${tx.timestamp})</span>`;
       document.getElementById('form-mode-badge').textContent = 'Modo Edição';
       document.getElementById('form-mode-badge').className = 'text-[11px] text-[#fcd34d] font-semibold bg-[#2e2518] px-2.5 py-1 rounded-md border border-[#453722]';
       document.getElementById('btn-submit-text').textContent = 'Salvar Alterações da Venda';
@@ -489,15 +625,24 @@ window.editTx = function(id) {
 
       updateSubtotal();
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      showToast('Modo de edição liberado. Altere os dados ao lado e clique em Salvar.');
+      showToast('Modo de edição liberado pela proprietária!');
     }
   );
 };
 
 window.deleteTx = function(id) {
+  const tx = state.transactions.find(t => t.id === id);
+  if (!tx) return;
+
+  const txDate = tx.date || getTodayLocalDate();
+  if (state.closedDays[txDate]) {
+    showToast(`O caixa de ${formatDisplayDate(txDate)} está fechado. Reabra o caixa deste dia para excluir.`);
+    return;
+  }
+
   promptOwnerPasswordAlways(
     'Excluir Venda / Lançamento',
-    'Somente a proprietária pode excluir. Digite a senha:',
+    'Somente a proprietária pode excluir vendas. Digite a senha:',
     () => {
       state.transactions = state.transactions.filter(t => t.id !== id);
       if (state.editingTxId === id) resetEditMode();
@@ -511,7 +656,9 @@ window.deleteTx = function(id) {
 
 function renderTransactions() {
   const listContainer = document.getElementById('tx-list-container');
-  const filtered = state.transactions.filter(tx => {
+  if (!listContainer) return;
+
+  const filtered = getTransactionsForCurrentView().filter(tx => {
     if (state.activeFilter === 'TODOS') return true;
     return tx.type === state.activeFilter;
   });
@@ -520,7 +667,7 @@ function renderTransactions() {
     listContainer.innerHTML = `
       <div class="py-14 text-center text-slate-500">
         <svg class="w-10 h-10 mx-auto text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
-        <p class="text-xs">Nenhum lançamento encontrado para este filtro.</p>
+        <p class="text-xs">Nenhum lançamento encontrado para a data/filtro selecionado.</p>
       </div>
     `;
     return;
@@ -533,6 +680,7 @@ function renderTransactions() {
     const lids = tx.lids !== undefined ? Number(tx.lids) : 0;
     const totalItemWeight = (Number(tx.weight) || 0) * qty;
     const weightFormatted = tx.weight ? `${qty > 1 ? `${qty}x ${tx.weight}g (${totalItemWeight}g)` : `${tx.weight}g`}` : 'Baixa Material';
+    const txDateFormatted = formatDisplayDate(tx.date || getTodayLocalDate());
 
     return `
       <div class="py-3 px-2 flex items-center justify-between gap-3 group hover:bg-[#15121c] rounded-xl transition">
@@ -563,6 +711,8 @@ function renderTransactions() {
             </span>
           </div>
           <div class="text-xs text-slate-400 flex flex-wrap items-center gap-1.5">
+            <span class="text-purple-300 font-medium">${txDateFormatted}</span>
+            <span>•</span>
             <span>${tx.paymentMethod}</span>
             ${tx.notes ? `<span>•</span> <span class="text-slate-400 italic text-[11px]">"${tx.notes}"</span>` : ''}
           </div>
@@ -609,11 +759,13 @@ function updateOwnerUI() {
 }
 
 function buildReportData() {
+  const targetDate = state.viewFilterDate === 'TODOS' ? getTodayLocalDate() : state.viewFilterDate;
+  const dateFormatted = formatDisplayDate(targetDate);
   const now = new Date();
-  const dateStr = now.toLocaleDateString('pt-BR');
   const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-  const timestamps = state.transactions.map(t => t.timestamp).filter(Boolean);
+  const txList = getTransactionsForCurrentView();
+  const timestamps = txList.map(t => t.timestamp).filter(Boolean);
   const firstTime = timestamps.length > 0 ? timestamps[timestamps.length - 1] : timeStr;
   const lastTime = timestamps.length > 0 ? timestamps[0] : timeStr;
 
@@ -631,7 +783,7 @@ function buildReportData() {
 
   const internalItems = [];
 
-  state.transactions.forEach(tx => {
+  txList.forEach(tx => {
     const qty = Number(tx.quantity) || 1;
     const itemWeight = (Number(tx.weight) || 0) * qty;
 
@@ -655,14 +807,14 @@ function buildReportData() {
     }
   });
 
-  const materialsUsage = computeMaterialsUsage();
+  const materialsUsage = computeMaterialsUsage(txList);
   const totalCupsOut = materialsUsage.copo_500.totalOut + materialsUsage.copo_700.totalOut + materialsUsage.isopor_500.totalOut;
   const avgTicket = salesTxCount > 0 ? (revenue / salesTxCount) : 0;
   const avgPricePerKg = soldWeight > 0 ? (revenue / (soldWeight / 1000)) : 0;
   const totalWeightOut = soldWeight + internalWeight;
 
   return {
-    dateStr,
+    dateStr: dateFormatted,
     timeStr,
     firstTime,
     lastTime,
@@ -679,7 +831,7 @@ function buildReportData() {
     payments,
     materialsUsage,
     internalItems,
-    totalRecords: state.transactions.length
+    totalRecords: txList.length
   };
 }
 
@@ -739,7 +891,7 @@ function populateClosingReport() {
 
   const internalContainer = document.getElementById('rep-internal-list');
   if (data.internalItems.length === 0) {
-    internalContainer.innerHTML = `<p class="text-slate-500 italic">Nenhum consumo interno ou perda avulsa registrada neste turno.</p>`;
+    internalContainer.innerHTML = `<p class="text-slate-500 italic">Nenhum consumo interno ou perda avulsa registrada nesta data.</p>`;
   } else {
     internalContainer.innerHTML = data.internalItems.map(item => {
       const qty = Number(item.quantity) || 1;
@@ -804,13 +956,14 @@ function populateClosingReport() {
 }
 
 function exportTransactionsCSV() {
-  if (state.transactions.length === 0) {
-    showToast('Não há registros para exportar.');
+  const targetList = getTransactionsForCurrentView();
+  if (targetList.length === 0) {
+    showToast('Não há registros para exportar nesta data.');
     return;
   }
 
-  const headers = ['Horario', 'Tipo', 'Recipiente_Material', 'Qtd_Recipientes', 'Colheres_Saidas', 'Tampas_Saidas', 'Peso_Total_g', 'Valor_Total_RS', 'Forma_Pagamento', 'Observacao'];
-  const rows = state.transactions.map(tx => {
+  const headers = ['Data', 'Horario', 'Tipo', 'Recipiente_Material', 'Qtd_Recipientes', 'Colheres_Saidas', 'Tampas_Saidas', 'Peso_Total_g', 'Valor_Total_RS', 'Forma_Pagamento', 'Observacao'];
+  const rows = targetList.map(tx => {
     const qty = Number(tx.quantity) || 1;
     const spoons = tx.spoons !== undefined ? Number(tx.spoons) : qty;
     const lids = tx.lids !== undefined ? Number(tx.lids) : 0;
@@ -819,6 +972,7 @@ function exportTransactionsCSV() {
     const notesClean = (tx.notes || '').replace(/;/g, ',').replace(/"/g, "'");
 
     return [
+      tx.date || getTodayLocalDate(),
       tx.timestamp,
       tx.type,
       tx.packaging,
@@ -836,9 +990,9 @@ function exportTransactionsCSV() {
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  const today = new Date().toISOString().slice(0, 10);
+  const dateSuffix = state.viewFilterDate === 'TODOS' ? 'todos' : state.viewFilterDate;
   a.href = url;
-  a.download = `fechamento-mont-acai-${today}.csv`;
+  a.download = `fechamento-mont-acai-${dateSuffix}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -925,15 +1079,92 @@ function setupLogoManager() {
   });
 }
 
+function updateFilterBadge() {
+  const badge = document.getElementById('filter-date-badge');
+  if (!badge) return;
+  if (state.viewFilterDate === 'TODOS') {
+    badge.textContent = 'Todas as Datas';
+  } else if (state.viewFilterDate === getTodayLocalDate()) {
+    badge.textContent = 'Hoje';
+  } else {
+    badge.textContent = formatDisplayDate(state.viewFilterDate);
+  }
+}
+
 window.onload = function() {
   loadAppData();
   setupLogoManager();
+
+  // Configuração inicial do Seletor de Data de Venda
+  const saleDateInput = document.getElementById('input-sale-date');
+  if (saleDateInput) {
+    saleDateInput.value = state.selectedDate;
+    saleDateInput.onchange = (e) => {
+      state.selectedDate = e.target.value || getTodayLocalDate();
+      checkDateStatus(state.selectedDate);
+    };
+  }
+
+  // Botão de Reabrir Caixa do Dia Fechado (Exige Senha)
+  const reopenDayBtn = document.getElementById('btn-reopen-day');
+  if (reopenDayBtn) {
+    reopenDayBtn.onclick = () => {
+      promptOwnerPasswordAlways(
+        'Reabrir Caixa do Dia',
+        `Digite a senha da proprietária para REABRIR o caixa de ${formatDisplayDate(state.selectedDate)}:`,
+        () => {
+          delete state.closedDays[state.selectedDate];
+          saveClosedDays();
+          checkDateStatus(state.selectedDate);
+          calculateMetrics();
+          renderTransactions();
+          showToast(`Caixa de ${formatDisplayDate(state.selectedDate)} reaberto com sucesso!`);
+        }
+      );
+    };
+  }
+
+  // Filtros de Data do Histórico
+  const filterDateInput = document.getElementById('filter-view-date');
+  if (filterDateInput) {
+    filterDateInput.value = state.viewFilterDate;
+    filterDateInput.onchange = (e) => {
+      state.viewFilterDate = e.target.value || getTodayLocalDate();
+      updateFilterBadge();
+      calculateMetrics();
+      renderTransactions();
+    };
+  }
+
+  const btnFilterToday = document.getElementById('btn-filter-today');
+  if (btnFilterToday) {
+    btnFilterToday.onclick = () => {
+      state.viewFilterDate = getTodayLocalDate();
+      if (filterDateInput) filterDateInput.value = state.viewFilterDate;
+      updateFilterBadge();
+      calculateMetrics();
+      renderTransactions();
+    };
+  }
+
+  const btnFilterAllDates = document.getElementById('btn-filter-all-dates');
+  if (btnFilterAllDates) {
+    btnFilterAllDates.onclick = () => {
+      state.viewFilterDate = 'TODOS';
+      updateFilterBadge();
+      calculateMetrics();
+      renderTransactions();
+    };
+  }
+
   renderPackagingButtons();
   renderPaymentButtons();
   setupTypeToggle();
   updateSubtotal();
+  checkDateStatus(state.selectedDate);
   calculateMetrics();
   renderTransactions();
+  updateFilterBadge();
 
   const qtyInput = document.getElementById('input-qty');
   const spoonsInput = document.getElementById('input-spoons');
@@ -1070,6 +1301,7 @@ window.onload = function() {
 
     const lossTx = {
       id: 'tx-' + Date.now(),
+      date: state.selectedDate,
       timestamp: timeFormatted,
       packaging: `Baixa: ${matObj ? matObj.label : matKey}`,
       extraMaterialKey: matKey,
@@ -1117,33 +1349,47 @@ window.onload = function() {
     showToast('Senha da proprietária alterada com sucesso!');
   };
 
+  // Fechamento de Caixa do Dia
   const clearModal = document.getElementById('modal-clear-shift');
   document.getElementById('btn-open-clear-modal').onclick = () => {
-    promptOwnerPasswordAlways(
-      'Zerar Turno e Fechar Caixa',
-      'Somente a proprietária pode zerar o turno. Digite a senha:',
-      () => {
-        clearModal.classList.remove('hidden');
-      }
-    );
+    if (state.closedDays[state.selectedDate]) {
+      showToast(`O caixa de ${formatDisplayDate(state.selectedDate)} já está fechado.`);
+      return;
+    }
+    const labelEl = document.getElementById('modal-close-date-label');
+    if (labelEl) labelEl.textContent = formatDisplayDate(state.selectedDate);
+    clearModal.classList.remove('hidden');
   };
+
   document.getElementById('btn-cancel-modal').onclick = () => {
     clearModal.classList.add('hidden');
   };
+
   document.getElementById('btn-confirm-clear').onclick = () => {
+    const targetDate = state.selectedDate;
+    const now = new Date();
+    const timeFormatted = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+    // Registra que a data foi finalizada e fechada
+    state.closedDays[targetDate] = {
+      closedAt: timeFormatted,
+      closedDate: targetDate,
+      timestamp: Date.now()
+    };
+    saveClosedDays();
+
+    // Atualiza saldo dos materiais se for o dia de hoje
     const currentUsage = computeMaterialsUsage();
     Object.values(currentUsage).forEach(item => {
       state.initialStock[item.key] = item.remaining;
     });
     saveStock();
 
-    state.transactions = [];
-    resetEditMode();
-    saveTransactions();
-    renderTransactions();
+    checkDateStatus(state.selectedDate);
     calculateMetrics();
+    renderTransactions();
     clearModal.classList.add('hidden');
-    showToast('Turno zerado! Saldo restante de materiais mantido para o próximo turno.');
+    showToast(`Caixa de ${formatDisplayDate(targetDate)} fechado com sucesso!`);
   };
 
   const reportModal = document.getElementById('modal-report');
