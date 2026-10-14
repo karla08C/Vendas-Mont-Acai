@@ -45,6 +45,10 @@
             <span id="top-cash-status" class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#1a1624] text-purple-200 border border-[#342a45]">
               📅 Caixa: <strong id="top-active-date" class="ml-1 text-white">--/--/----</strong>
             </span>
+            <span id="cloud-sync-badge" class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#14232c] text-[#67e8f9] border border-[#21404e]" title="Status de sincronização em tempo real com o Firebase Firestore">
+              <span id="cloud-dot" class="w-1.5 h-1.5 rounded-full bg-[#22d3ee] mr-1.5 animate-pulse"></span>
+              <span id="cloud-status-text">☁️ Nuvem Conectando...</span>
+            </span>
           </div>
           <div class="flex items-center gap-2 mt-0.5">
             <p class="text-xs text-slate-400">Controle de pesagem e lançamento de pedidos</p>
@@ -781,6 +785,10 @@
     <svg class="w-4 h-4 text-[#6ee7b7] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
     <span id="toast-message" class="text-xs font-semibold">Operação realizada com sucesso!</span>
   </div>
+
+  <!-- Firebase SDKs (v10 compat para suporte em tempo real no navegador) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
   <!-- Script principal modular -->
   <script src="app.js"></script>

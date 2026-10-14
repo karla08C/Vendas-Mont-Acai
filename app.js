@@ -1,8 +1,29 @@
 /**
  * Mont' Açaí - Sistema PDV, Balança & Controle de Materiais
  * Lógica principal de vendas, auditoria de estoque (copos, isopores, colheres e tampas),
- * controle diário de fechamento de caixa por data, autenticação da proprietária e relatórios.
+ * controle diário de fechamento de caixa por data, autenticação da proprietária,
+ * relatórios executivos e sincronização em tempo real na nuvem via Google Firebase Firestore.
  */
+
+// ==========================================================================
+// 1. CONFIGURAÇÃO DO GOOGLE FIREBASE FIRESTORE
+// ==========================================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyBlcd0csh9q2CKuV8QgdNY7BYytZ7U_Cyk",
+  authDomain: "vendas-mont-acai.firebaseapp.com",
+  projectId: "vendas-mont-acai",
+  storageBucket: "vendas-mont-acai.firebasestorage.app",
+  messagingSenderId: "894605670474",
+  appId: "1:894605670474:web:7f3265df72ad0d67168eb3",
+  measurementId: "G-V1LKD0LDFP"
+};
+
+let db = null;
+let isCloudActive = false;
+
+// ==========================================================================
+// 2. CONSTANTES DO SISTEMA E OPÇÕES DE PRODUTO
+// ==========================================================================
 
 // Opções de recipientes e embalagens
 const PACKAGING_OPTIONS = [
@@ -94,6 +115,188 @@ function getPackageKeyByLabel(label) {
   return found ? found.id : null;
 }
 
+// ==========================================================================
+// 3. SINCRONIZAÇÃO EM NUVEM (FIREBASE FIRESTORE) + LOCALSTORAGE BACKUP
+// ==========================================================================
+
+function updateCloudBadge(status, customText) {
+  const badge = document.getElementById('cloud-sync-badge');
+  const dot = document.getElementById('cloud-dot');
+  const text = document.getElementById('cloud-status-text');
+  if (!badge || !dot || !text) return;
+
+  if (status === 'connected') {
+    badge.className = 'inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#112922] text-[#6ee7b7] border border-[#1e483b] transition';
+    dot.className = 'w-1.5 h-1.5 rounded-full bg-[#34d399] mr-1.5';
+    text.textContent = '☁️ Nuvem Ao Vivo';
+    badge.title = 'Conectado ao Firebase Firestore: os dados sincronizam entre todos os aparelhos em tempo real.';
+  } else if (status === 'syncing') {
+    badge.className = 'inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#14232c] text-[#67e8f9] border border-[#21404e] transition';
+    dot.className = 'w-1.5 h-1.5 rounded-full bg-[#22d3ee] mr-1.5 animate-pulse';
+    text.textContent = customText || '☁️ Sincronizando...';
+  } else if (status === 'offline') {
+    badge.className = 'inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#2b2213] text-[#fcd34d] border border-[#483719] transition';
+    dot.className = 'w-1.5 h-1.5 rounded-full bg-[#fbbf24] mr-1.5';
+    text.textContent = '☁️ Modo Offline';
+    badge.title = 'Sem conexão com a internet. Lançamentos gravados localmente que serão sincronizados ao reconectar.';
+  } else if (status === 'rule-error') {
+    badge.className = 'inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#2e1a22] text-rose-300 border border-[#4a2634] transition';
+    dot.className = 'w-1.5 h-1.5 rounded-full bg-rose-400 mr-1.5';
+    text.textContent = '☁️ Nuvem (Regras)';
+    badge.title = 'Banco Firestore precisa de autorização na aba Regras do Console.';
+  }
+}
+
+// Inicializa o Firebase Firestore com persistência offline e listeners em tempo real
+function initFirestoreSync() {
+  updateCloudBadge('syncing', '☁️ Conectando...');
+
+  try {
+    if (typeof firebase === 'undefined') {
+      console.warn('SDK do Firebase não carregado no navegador. Operando em modo local.');
+      updateCloudBadge('offline');
+      return;
+    }
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    db = firebase.firestore();
+
+    // Habilita persistência offline inteligente no IndexedDB do navegador
+    db.enablePersistence({ synchronizeTabs: true }).catch(err => {
+      if (err.code === 'failed-precondition') {
+        console.warn('Múltiplas abas abertas, persistência ativada em uma delas.');
+      } else if (err.code === 'unimplemented') {
+        console.warn('Navegador não suporta persistência offline do Firestore.');
+      }
+    });
+
+    isCloudActive = true;
+    listenToCloudData();
+
+  } catch (err) {
+    console.error('Falha ao conectar ao Firebase:', err);
+    updateCloudBadge('offline');
+  }
+}
+
+// Escuta alterações em tempo real no Firestore e sincroniza com a interface
+function listenToCloudData() {
+  if (!db) return;
+
+  // 1. Escuta Coleção de Transações (Vendas e Consumos)
+  db.collection('transactions').onSnapshot(
+    (snapshot) => {
+      const cloudList = [];
+      snapshot.forEach((doc) => {
+        cloudList.push({ id: doc.id, ...doc.data() });
+      });
+
+      // 1. Mapa de transações da nuvem
+      const cloudMap = new Map();
+      cloudList.forEach((tx) => {
+        if (tx && tx.id) cloudMap.set(tx.id, tx);
+      });
+
+      // 2. Proteção Total dos Registros Anteriores:
+      // Se houver qualquer lançamento registrado anteriormente neste navegador que ainda
+      // não esteja na nuvem, ele é preservado e enviado automaticamente para o Firestore.
+      if (Array.isArray(state.transactions)) {
+        state.transactions.forEach((localTx) => {
+          if (localTx && localTx.id && !cloudMap.has(localTx.id)) {
+            cloudMap.set(localTx.id, localTx);
+            db.collection('transactions').doc(localTx.id).set(localTx).catch((e) => {
+              console.warn('Migração de venda local para nuvem:', e.message);
+            });
+          }
+        });
+      }
+
+      // 3. Lista unificada e consolidada (nuvem + registros locais)
+      const mergedList = Array.from(cloudMap.values());
+      mergedList.sort((a, b) => {
+        const idA = a.id || '';
+        const idB = b.id || '';
+        return idB.localeCompare(idA);
+      });
+
+      state.transactions = mergedList;
+      try {
+        localStorage.setItem('acai_flow_v3', JSON.stringify(state.transactions));
+      } catch (_) {}
+
+      updateCloudBadge('connected');
+      calculateMetrics();
+      renderTransactions();
+      renderLastTransaction();
+    },
+    (error) => {
+      console.warn('Aviso de sincronização do Firestore:', error.message);
+      if (error.code === 'permission-denied') {
+        updateCloudBadge('rule-error');
+      } else {
+        updateCloudBadge('offline');
+      }
+    }
+  );
+
+  // 2. Escuta Estoque Inicial de Materiais
+  db.collection('settings').doc('stock').onSnapshot((doc) => {
+    if (doc.exists) {
+      const data = doc.data();
+      state.initialStock = { ...state.initialStock, ...data };
+      try {
+        localStorage.setItem('mont_acai_stock_v1', JSON.stringify(state.initialStock));
+      } catch (_) {}
+      calculateMetrics();
+      renderOwnerMaterialsPanel();
+    } else {
+      // Se não existir na nuvem ainda, faz backup do estoque local da loja para a nuvem
+      if (state.initialStock) {
+        db.collection('settings').doc('stock').set(state.initialStock).catch(() => {});
+      }
+    }
+  }, (err) => console.warn('Erro ao sincronizar estoque:', err.message));
+
+  // 3. Escuta Fechamento de Caixas por Data
+  db.collection('settings').doc('closed_days').onSnapshot((doc) => {
+    if (doc.exists) {
+      const data = doc.data();
+      state.closedDays = { ...state.closedDays, ...data };
+      try {
+        localStorage.setItem('mont_acai_closed_days_v1', JSON.stringify(state.closedDays));
+      } catch (_) {}
+      checkDateStatus(state.selectedDate);
+    } else {
+      // Se não existir na nuvem ainda, faz backup dos caixas fechados para a nuvem
+      if (state.closedDays && Object.keys(state.closedDays).length > 0) {
+        db.collection('settings').doc('closed_days').set(state.closedDays).catch(() => {});
+      }
+    }
+  }, (err) => console.warn('Erro ao sincronizar dias fechados:', err.message));
+
+  // 4. Escuta Senha da Proprietária e Configurações Gerais
+  db.collection('settings').doc('security').onSnapshot((doc) => {
+    if (doc.exists) {
+      const data = doc.data();
+      if (data.ownerPassword) {
+        state.ownerPassword = data.ownerPassword;
+        try {
+          localStorage.setItem('mont_acai_owner_pw', state.ownerPassword);
+        } catch (_) {}
+      }
+    } else {
+      // Se não existir na nuvem ainda, faz backup da senha atual para a nuvem
+      if (state.ownerPassword) {
+        db.collection('settings').doc('security').set({ ownerPassword: state.ownerPassword }).catch(() => {});
+      }
+    }
+  }, (err) => console.warn('Erro ao sincronizar segurança:', err.message));
+}
+
+// Carrega dados locais do navegador (para abertura instantânea em 0ms)
 function loadAppData() {
   try {
     const savedPw = localStorage.getItem('mont_acai_owner_pw');
@@ -114,7 +317,6 @@ function loadAppData() {
     const raw = localStorage.getItem('acai_flow_v3');
     if (raw) {
       state.transactions = JSON.parse(raw);
-      // Compatibilidade retroativa garantindo campo date
       state.transactions.forEach(tx => {
         if (!tx.date) tx.date = getTodayLocalDate();
       });
@@ -127,29 +329,48 @@ function loadAppData() {
   }
 }
 
-function saveTransactions() {
+// Salva transações localmente e na nuvem
+function saveTransactionsLocally() {
   try {
     localStorage.setItem('acai_flow_v3', JSON.stringify(state.transactions));
   } catch (e) {
-    console.error('Falha de armazenamento de vendas:', e);
+    console.error('Falha de armazenamento local de vendas:', e);
   }
 }
 
+// Salva estoque localmente e na nuvem
 function saveStock() {
   try {
     localStorage.setItem('mont_acai_stock_v1', JSON.stringify(state.initialStock));
   } catch (e) {
-    console.error('Erro ao salvar estoque:', e);
+    console.error('Erro ao salvar estoque local:', e);
+  }
+
+  if (db) {
+    db.collection('settings').doc('stock').set(state.initialStock).catch(err => {
+      console.warn('Erro ao salvar estoque na nuvem:', err.message);
+    });
   }
 }
 
+// Salva dias fechados localmente e na nuvem
 function saveClosedDays() {
   try {
     localStorage.setItem('mont_acai_closed_days_v1', JSON.stringify(state.closedDays));
   } catch (e) {
-    console.error('Erro ao salvar dias fechados:', e);
+    console.error('Erro ao salvar dias fechados local:', e);
+  }
+
+  if (db) {
+    db.collection('settings').doc('closed_days').set(state.closedDays).catch(err => {
+      console.warn('Erro ao salvar dias fechados na nuvem:', err.message);
+    });
   }
 }
+
+// ==========================================================================
+// 4. LÓGICA DE INTERFACE, CONTROLE DE CAIXA E MATERIAIS
+// ==========================================================================
 
 // Verifica e atualiza os elementos de UI com base no status do caixa da data
 function checkDateStatus(dateStr) {
@@ -567,7 +788,7 @@ function resetEditMode() {
 }
 
 function handleCreateTransaction() {
-  // 1. Bloqueio estrito se o dia selecionado já estiver fechado
+  // Bloqueio estrito se o dia selecionado já estiver fechado
   if (state.closedDays[state.selectedDate]) {
     showToast(`O caixa do dia ${formatDisplayDate(state.selectedDate)} está fechado. Reabra o caixa com a senha para lançar.`);
     return;
@@ -604,7 +825,7 @@ function handleCreateTransaction() {
   if (state.editingTxId) {
     const index = state.transactions.findIndex(t => t.id === state.editingTxId);
     if (index !== -1) {
-      state.transactions[index] = {
+      const updatedTx = {
         ...state.transactions[index],
         date: state.selectedDate,
         packaging: state.selectedPackaging.label,
@@ -619,7 +840,17 @@ function handleCreateTransaction() {
         paymentMethod: isVenda ? state.selectedPayment : 'Consumo Equipe',
         notes: notesInput.value.trim(),
       };
-      saveTransactions();
+
+      state.transactions[index] = updatedTx;
+      saveTransactionsLocally();
+
+      // Salva no Firestore
+      if (db) {
+        db.collection('transactions').doc(updatedTx.id).set(updatedTx).catch(err => {
+          console.warn('Erro ao atualizar no Firestore:', err.message);
+        });
+      }
+
       renderTransactions();
       calculateMetrics();
       renderLastTransaction();
@@ -650,7 +881,14 @@ function handleCreateTransaction() {
   };
 
   state.transactions.unshift(newTx);
-  saveTransactions();
+  saveTransactionsLocally();
+
+  // Salva no Firestore na nuvem
+  if (db) {
+    db.collection('transactions').doc(newTx.id).set(newTx).catch(err => {
+      console.warn('Erro ao gravar no Firestore:', err.message);
+    });
+  }
 
   // Sincroniza visualização do dia para o dia do lançamento se estiver em outra data
   if (state.viewFilterDate !== 'TODOS' && state.viewFilterDate !== state.selectedDate) {
@@ -665,7 +903,7 @@ function handleCreateTransaction() {
   renderLastTransaction();
 
   resetEditMode();
-  showToast(isVenda ? 'Venda e saída de materiais registradas!' : 'Consumo interno e materiais registrados!');
+  showToast(isVenda ? 'Venda registrada com sucesso!' : 'Consumo interno registrado com sucesso!');
 }
 
 // Modal universal que EXIGE SEMPRE a senha da proprietária
@@ -751,7 +989,15 @@ window.deleteTx = function(id) {
     () => {
       state.transactions = state.transactions.filter(t => t.id !== id);
       if (state.editingTxId === id) resetEditMode();
-      saveTransactions();
+      saveTransactionsLocally();
+
+      // Deleta do Firestore na nuvem
+      if (db) {
+        db.collection('transactions').doc(id).delete().catch(err => {
+          console.warn('Erro ao deletar no Firestore:', err.message);
+        });
+      }
+
       renderTransactions();
       calculateMetrics();
       renderLastTransaction();
@@ -1204,6 +1450,10 @@ function updateFilterBadge() {
   }
 }
 
+// ==========================================================================
+// 5. INICIALIZAÇÃO E EVENTOS
+// ==========================================================================
+
 window.onload = function() {
   loadAppData();
   setupLogoManager();
@@ -1288,6 +1538,9 @@ window.onload = function() {
   renderTransactions();
   renderLastTransaction();
   updateFilterBadge();
+
+  // Conecta ao Google Firebase Firestore em tempo real
+  initFirestoreSync();
 
   const qtyInput = document.getElementById('input-qty');
   const spoonsInput = document.getElementById('input-spoons');
@@ -1444,7 +1697,15 @@ window.onload = function() {
     }
 
     state.transactions.unshift(lossTx);
-    saveTransactions();
+    saveTransactionsLocally();
+
+    // Salva na nuvem Firestore
+    if (db) {
+      db.collection('transactions').doc(lossTx.id).set(lossTx).catch(err => {
+        console.warn('Erro ao salvar baixa no Firestore:', err.message);
+      });
+    }
+
     renderTransactions();
     calculateMetrics();
     renderLastTransaction();
@@ -1469,6 +1730,14 @@ window.onload = function() {
     try {
       localStorage.setItem('mont_acai_owner_pw', newPw);
     } catch (_) {}
+
+    // Salva na nuvem Firestore
+    if (db) {
+      db.collection('settings').doc('security').set({ ownerPassword: newPw }).catch(err => {
+        console.warn('Erro ao salvar senha no Firestore:', err.message);
+      });
+    }
+
     pwModal.classList.add('hidden');
     showToast('Senha da proprietária alterada com sucesso!');
   };

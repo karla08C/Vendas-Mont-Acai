@@ -4,9 +4,10 @@
 ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+![Firebase](https://img.shields.io/badge/Firebase_Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
 ![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 
-Sistema web completo de **Ponto de Venda (PDV)**, **controle de pesagem em balança** e **auditoria de estoque de materiais descartáveis** desenvolvido sob medida para a loja **Mont' Açaí**.
+Sistema web completo de **Ponto de Venda (PDV)**, **controle de pesagem em balança**, **auditoria de estoque de materiais descartáveis** e **sincronização em tempo real na nuvem** desenvolvido sob medida para a loja **Mont' Açaí**.
 
 🔗 **Acesse o sistema online:** [https://vendas-mont-acai.vercel.app/](https://vendas-mont-acai.vercel.app/)
 
@@ -14,14 +15,15 @@ Sistema web completo de **Ponto de Venda (PDV)**, **controle de pesagem em balan
 
 ## 💻 Linguagens e Tecnologias Utilizadas
 
-O projeto foi estruturado utilizando tecnologias web modernas, leves e sem dependência de servidores externos para garantir funcionamento rápido direto no navegador do caixa:
+O projeto foi estruturado utilizando tecnologias web modernas, leves e com banco de dados em tempo real na nuvem, mantendo operação ininterrupta no caixa mesmo se houver queda de internet:
 
 | Linguagem / Tecnologia | Finalidade no Projeto |
 | :--- | :--- |
 | **HTML5 (`index.html`)** | Estruturação semântica do painel de PDV, indicadores executivos, tabelas de auditoria e modais de gestão. |
 | **CSS3 (`style.css`) & Tailwind CSS** | Estilização com paleta fosca personalizada (*Matte Dark Plum*), responsividade para desktop/tablet/celular e layout otimizado para impressão/PDF (`@media print`). |
 | **JavaScript ES6+ (`app.js`)** | Lógica de negócios, cálculos financeiros em tempo real, controle de estoque de copos/colheres/tampas, autenticação por senha da proprietária e exportação de relatórios (WhatsApp, CSV e Impressão). |
-| **Web Storage API (`localStorage`)** | Persistência local automática de vendas, estoque inicial de materiais, senha da proprietária e logotipo da loja. |
+| **Google Firebase Firestore (v10 SDK)** | Banco de dados na nuvem NoSQL em tempo real (`southamerica-east1`), sincronizando vendas, estoque e caixas entre múltiplos aparelhos (celular da proprietária + computador do balcão) com persistência offline via IndexedDB. |
+| **Web Storage API (`localStorage`)** | Camada de redundância e fallback local instantâneo (0ms de carregamento) para dados, estoque e configurações. |
 
 ---
 
@@ -55,17 +57,23 @@ O projeto foi estruturado utilizando tecnologias web modernas, leves e sem depen
 - **Reabertura Protegida por Senha:** Se for necessário alterar ou lançar algo em um dia já fechado, o sistema exige a senha da proprietária para desbloquear o dia.
 - **Filtro de Histórico e Métricas:** Navegação e conferência rápida por dia específico ou consolidado geral.
 
----
+### ☁️ 5. Sincronização em Tempo Real na Nuvem (Google Firebase Firestore)
+- **Sincronização Multi-Dispositivo Instantânea:** A proprietária pode acompanhar as vendas e o faturamento em tempo real pelo celular enquanto o atendimento ocorre no computador do balcão.
+- **Badges de Conexão no Topo:** Indicação visual de `☁️ Nuvem Ao Vivo`, `☁️ Sincronizando...` ou `☁️ Modo Offline`.
+- **Persistência Offline Resiliente:** Graças à persistência do SDK Firebase e redundância com `localStorage`, a loja nunca para de funcionar mesmo se faltar internet no balcão. As operações são gravadas localmente e sincronizadas automaticamente quando o sinal restabelecer.
+- **Migração Transparente:** Os lançamentos feitos anteriormente no navegador são migrados automaticamente para a nuvem no primeiro acesso.
 
+---
 
 ## 📁 Estrutura de Arquivos
 
 ```text
 Vendas-Mont-Acai/
-├── index.html   # Interface principal do PDV, modais e estrutura semântica
-├── style.css    # Estilos customizados, paleta Matte Dark Plum e regras de impressão (@media print)
-├── app.js       # Lógica de estado, cálculos, controle de estoque, autenticação e relatórios
-└── README.md    # Documentação técnica e guia do projeto
+├── index.html        # Interface principal do PDV, modais e estrutura semântica
+├── style.css         # Estilos customizados, paleta Matte Dark Plum e regras de impressão (@media print)
+├── app.js            # Lógica de estado, sincronização Firebase, controle de estoque e autenticação
+├── firestore.rules   # Regras de segurança e integridade do Cloud Firestore
+└── README.md         # Documentação técnica e guia do projeto
 ```
 
 ---

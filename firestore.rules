@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * Mont' Açaí - Regras de Segurança do Cloud Firestore
+     * Permite operação contínua do PDV e painel da proprietária
+     */
+
+    // Coleção de Transações: Registro de Vendas e Consumos Internos
+    match /transactions/{transactionId} {
+      allow read, write: if true;
+    }
+
+    // Coleção de Configurações: Estoque de Insumos, Caixas Fechados e Segurança
+    match /settings/{settingDoc} {
+      allow read, write: if settingDoc in ['stock', 'closed_days', 'security'];
+    }
+  }
+}
