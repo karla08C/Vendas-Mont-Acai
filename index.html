@@ -760,24 +760,53 @@
     </div>
   </div>
 
-  <!-- MODAL: CONFIRMAR FECHAMENTO DE CAIXA DO DIA -->
+  <!-- MODAL: FECHAMENTO DE CAIXA (HOJE OU DIAS ANTERIORES) -->
   <div id="modal-clear-shift" class="fixed inset-0 bg-black/80 flex items-center justify-center p-3 sm:p-4 z-50 hidden">
-    <div class="surface-card max-w-sm w-full max-h-[92vh] overflow-y-auto rounded-2xl p-5 sm:p-6 border border-[#3a2832] space-y-4">
-      <div class="w-12 h-12 rounded-xl bg-[#2b1c22] text-rose-400 flex items-center justify-center border border-[#422831] mx-auto">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+    <div class="surface-card max-w-md w-full max-h-[92vh] overflow-y-auto rounded-2xl p-5 sm:p-6 border border-[#3a2832] space-y-4">
+      <div class="flex items-center justify-between border-b border-[#2a2436] pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-xl bg-[#2b1c22] text-rose-400 flex items-center justify-center border border-[#422831]">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-slate-100">Fechamento de Caixa</h3>
+            <p class="text-xs text-slate-400">Finalize o caixa de hoje ou de qualquer data anterior</p>
+          </div>
+        </div>
+        <button id="btn-close-clear-modal-x" class="text-slate-400 hover:text-white p-1">✕</button>
       </div>
 
-      <div class="text-center">
-        <h3 class="font-bold text-base text-slate-100">Fechar Caixa do Dia?</h3>
-        <p class="text-xs text-slate-400 mt-1">
-          Você está prestes a fechar o caixa de <strong id="modal-close-date-label" class="text-purple-300">Hoje</strong>.
-          Após fechar, o dia ficará bloqueado para novos lançamentos e só poderá ser reaberto com a senha da proprietária.
-        </p>
+      <!-- Seletor de Data do Fechamento -->
+      <div class="space-y-1.5">
+        <label for="modal-close-date-input" class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+          Data do Caixa a Ser Fechado:
+        </label>
+        <div class="flex items-center gap-2">
+          <input type="date" id="modal-close-date-input" class="flex-1 bg-[#121016] border border-[#322945] rounded-xl px-3 py-2 text-xs font-semibold text-white focus:outline-none focus:border-purple-400" />
+          <button type="button" id="btn-modal-close-today" class="px-3 py-2 rounded-xl bg-[#251f30] hover:bg-[#322a42] text-purple-200 text-xs font-semibold transition scale-tap">Hoje</button>
+        </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-2 pt-2">
-        <button id="btn-cancel-modal" class="py-2.5 rounded-xl bg-[#252030] hover:bg-[#302a3d] text-slate-300 font-semibold text-xs transition min-h-[42px]">Cancelar</button>
-        <button id="btn-confirm-clear" class="py-2.5 rounded-xl bg-rose-700 hover:bg-rose-600 text-white font-semibold text-xs transition scale-tap min-h-[42px]">Sim, Fechar Caixa</button>
+      <!-- Resumo do Dia Selecionado -->
+      <div id="modal-close-day-summary" class="bg-[#14111a] p-3.5 rounded-xl border border-[#262030] space-y-2">
+        <!-- Preenchido dinamicamente via JS -->
+      </div>
+
+      <!-- Alerta de Dias Anteriores com Caixa Ainda Aberto -->
+      <div id="modal-pending-days-container" class="space-y-1.5 hidden bg-[#261d15] p-3 rounded-xl border border-[#422e1b]">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-amber-300 block flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          Dias anteriores com vendas e caixa ainda aberto:
+        </span>
+        <p class="text-[11px] text-amber-200/80">Clique na data abaixo para fechar o caixa pendente:</p>
+        <div id="modal-pending-days-list" class="flex flex-wrap gap-1.5 pt-1">
+          <!-- Injetado dinamicamente -->
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-[#2a2436]">
+        <button id="btn-cancel-modal" class="px-4 py-2.5 rounded-xl bg-[#252030] hover:bg-[#302a3d] text-slate-300 font-semibold text-xs transition min-h-[42px]">Cancelar</button>
+        <button id="btn-confirm-clear" class="px-4 py-2.5 rounded-xl bg-rose-700 hover:bg-rose-600 text-white font-semibold text-xs transition scale-tap min-h-[42px]">Fechar Caixa Deste Dia</button>
       </div>
     </div>
   </div>

@@ -1742,24 +1742,168 @@ window.onload = function() {
     showToast('Senha da proprietária alterada com sucesso!');
   };
 
-  // Fechamento de Caixa do Dia
+  // Fechamento de Caixa (Hoje ou Dias Anteriores)
   const clearModal = document.getElementById('modal-clear-shift');
-  document.getElementById('btn-open-clear-modal').onclick = () => {
-    if (state.closedDays[state.selectedDate]) {
-      showToast(`O caixa de ${formatDisplayDate(state.selectedDate)} já está fechado.`);
-      return;
+  const closeDateInput = document.getElementById('modal-close-date-input');
+  const btnCloseToday = document.getElementById('btn-modal-close-today');
+  const btnCloseModalX = document.getElementById('btn-close-clear-modal-x');
+
+  function refreshCloseModalDetails(targetDate) {
+    if (!targetDate) targetDate = getTodayLocalDate();
+    if (closeDateInput) closeDateInput.value = targetDate;
+
+    const summaryContainer = document.getElementById('modal-close-day-summary');
+    const pendingContainer = document.getElementById('modal-pending-days-container');
+    const pendingListEl = document.getElementById('modal-pending-days-list');
+    const confirmBtn = document.getElementById('btn-confirm-clear');
+
+    // Transações do dia selecionado
+    const dayTxs = state.transactions.filter(t => (t.date || getTodayLocalDate()) === targetDate);
+    let dayRevenue = 0;
+    let daySalesCount = 0;
+    let dayWeight = 0;
+
+    dayTxs.forEach(tx => {
+      const qty = Number(tx.quantity) || 1;
+      const w = (Number(tx.weight) || 0) * qty;
+      if (tx.type === 'VENDA') {
+        dayRevenue += (Number(tx.total) || 0);
+        daySalesCount += 1;
+        dayWeight += w;
+      }
+    });
+
+    const isClosed = Boolean(state.closedDays[targetDate]);
+    const closedInfo = state.closedDays[targetDate];
+
+    if (summaryContainer) {
+      summaryContainer.innerHTML = `
+        <div class="flex items-center justify-between pb-2 border-b border-[#262030]">
+          <div>
+            <span class="text-[10px] text-slate-400 uppercase font-semibold block">Caixa Referência:</span>
+            <strong class="text-sm text-slate-100">${formatDisplayDate(targetDate)}</strong>
+          </div>
+          <div>
+            ${isClosed ? `
+              <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-950 text-rose-300 border border-rose-800">
+                <span class="w-1.5 h-1.5 rounded-full bg-rose-400 mr-1.5"></span>
+                🔒 Caixa Já Fechado
+              </span>
+            ` : `
+              <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></span>
+                ● Caixa Aberto
+              </span>
+            `}
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 pt-1 text-center">
+          <div class="bg-[#1b1724] p-2 rounded-lg border border-[#2b2438]">
+            <span class="text-[10px] text-slate-400 block">Faturamento</span>
+            <strong class="text-xs text-[#6ee7b7] block mt-0.5">R$ ${formatBRL(dayRevenue)}</strong>
+          </div>
+          <div class="bg-[#1b1724] p-2 rounded-lg border border-[#2b2438]">
+            <span class="text-[10px] text-slate-400 block">Vendas Pagas</span>
+            <strong class="text-xs text-slate-100 block mt-0.5">${daySalesCount} un</strong>
+          </div>
+          <div class="bg-[#1b1724] p-2 rounded-lg border border-[#2b2438]">
+            <span class="text-[10px] text-slate-400 block">Peso Total</span>
+            <strong class="text-xs text-purple-200 block mt-0.5">${formatKg(dayWeight)} kg</strong>
+          </div>
+        </div>
+
+        ${isClosed ? `
+          <div class="p-2 rounded-lg bg-rose-950/40 border border-rose-800/60 text-[11px] text-rose-300">
+            ℹ️ Este caixa foi finalizado às <strong>${closedInfo.closedAt || '--:--'}</strong>. Para registrar vendas ou alterar algo nesta data, use a opção "Reabrir Caixa" na tela com a senha da proprietária.
+          </div>
+        ` : `
+          <div class="p-2 rounded-lg bg-[#1a231f] border border-[#263d33] text-[11px] text-emerald-300">
+            ✓ Ao confirmar, o caixa de <strong>${formatDisplayDate(targetDate)}</strong> será finalizado e protegido contra novos lançamentos no balcão.
+          </div>
+        `}
+      `;
     }
-    const labelEl = document.getElementById('modal-close-date-label');
-    if (labelEl) labelEl.textContent = formatDisplayDate(state.selectedDate);
+
+    if (confirmBtn) {
+      if (isClosed) {
+        confirmBtn.disabled = true;
+        confirmBtn.className = 'px-4 py-2.5 rounded-xl bg-[#281c24] text-slate-500 border border-[#3b2533] font-semibold text-xs cursor-not-allowed min-h-[42px]';
+        confirmBtn.textContent = 'Caixa Já Foi Fechado';
+      } else {
+        confirmBtn.disabled = false;
+        confirmBtn.className = 'px-4 py-2.5 rounded-xl bg-rose-700 hover:bg-rose-600 text-white font-semibold text-xs transition scale-tap min-h-[42px]';
+        confirmBtn.textContent = `Fechar Caixa de ${formatDisplayDate(targetDate)}`;
+      }
+    }
+
+    // Procura dias anteriores com vendas e caixa ainda aberto
+    const today = getTodayLocalDate();
+    const distinctDates = [...new Set(state.transactions.map(t => t.date || today))];
+    const pendingDates = distinctDates.filter(d => d < today && !state.closedDays[d]);
+
+    if (pendingContainer && pendingListEl) {
+      if (pendingDates.length > 0) {
+        pendingContainer.classList.remove('hidden');
+        pendingListEl.innerHTML = pendingDates.map(d => {
+          const count = state.transactions.filter(t => t.date === d && t.type === 'VENDA').length;
+          return `
+            <button type="button" onclick="window.selectDateToClose('${d}')" class="px-2.5 py-1 rounded-lg bg-[#332214] hover:bg-[#47301c] text-amber-200 border border-[#59391e] font-medium text-[11px] flex items-center gap-1 transition scale-tap">
+              <span>📅 ${formatDisplayDate(d)}</span>
+              <span class="text-amber-400/80">(${count} vendas)</span>
+              <span class="underline font-bold ml-1">Selecionar</span>
+            </button>
+          `;
+        }).join('');
+      } else {
+        pendingContainer.classList.add('hidden');
+      }
+    }
+  }
+
+  window.selectDateToClose = function(d) {
+    refreshCloseModalDetails(d);
+  };
+
+  document.getElementById('btn-open-clear-modal').onclick = () => {
+    // Se a proprietária estiver visualizando uma data específica no relatório, sugere aquela data
+    let initialDate = state.viewFilterDate !== 'TODOS' ? state.viewFilterDate : state.selectedDate;
+    if (!initialDate) initialDate = getTodayLocalDate();
+    refreshCloseModalDetails(initialDate);
     clearModal.classList.remove('hidden');
   };
+
+  if (closeDateInput) {
+    closeDateInput.onchange = (e) => {
+      refreshCloseModalDetails(e.target.value);
+    };
+  }
+
+  if (btnCloseToday) {
+    btnCloseToday.onclick = () => {
+      refreshCloseModalDetails(getTodayLocalDate());
+    };
+  }
+
+  if (btnCloseModalX) {
+    btnCloseModalX.onclick = () => {
+      clearModal.classList.add('hidden');
+    };
+  }
 
   document.getElementById('btn-cancel-modal').onclick = () => {
     clearModal.classList.add('hidden');
   };
 
   document.getElementById('btn-confirm-clear').onclick = () => {
-    const targetDate = state.selectedDate;
+    const targetDate = closeDateInput ? closeDateInput.value : state.selectedDate;
+    if (!targetDate) return;
+
+    if (state.closedDays[targetDate]) {
+      showToast(`O caixa de ${formatDisplayDate(targetDate)} já está fechado.`);
+      return;
+    }
+
     const now = new Date();
     const timeFormatted = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
@@ -1771,18 +1915,13 @@ window.onload = function() {
     };
     saveClosedDays();
 
-    // Atualiza saldo dos materiais se for o dia de hoje
-    const currentUsage = computeMaterialsUsage();
-    Object.values(currentUsage).forEach(item => {
-      state.initialStock[item.key] = item.remaining;
-    });
-    saveStock();
-
+    // Se a data for a mesma selecionada no balcão, atualiza o status de bloqueio
     checkDateStatus(state.selectedDate);
     calculateMetrics();
     renderTransactions();
     renderLastTransaction();
-    clearModal.classList.add('hidden');
+
+    refreshCloseModalDetails(targetDate);
     showToast(`Caixa de ${formatDisplayDate(targetDate)} fechado com sucesso!`);
   };
 
